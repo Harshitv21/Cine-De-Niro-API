@@ -18,22 +18,27 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3 
+      uses: actions/setup-node@v3
       with:
         node-version: '20'
 
     - name: Install dependencies
       run: npm install
 
+    - name: Zip application for deployment
+      run: zip -r app.zip . 
+
     - name: Deploy to Elastic Beanstalk
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: 'ap-south-1'
-        EB_ENV_NAME: 'your-eb-environment-name'
-        EB_APP_NAME: 'your-eb-app-name'
+      uses: einaregilsson/beanstalk-deploy@v22
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: Anime-Movie-API      
+        environment_name: Anime-Movie-API-env  
+        version_label: v1
+        region: ap-south-1
+        deployment_package: app.zip
+
+    - name: Verify Deployment
       run: |
-        npx elastic-beanstalk-deploy \
-          --region $AWS_REGION \
-          --application-name $EB_APP_NAME \
-          --environment-name $EB_ENV_NAME
+        echo "Deployment completed successfully!"
