@@ -1,10 +1,11 @@
 {
   "name": "tmdb-anime-api",
   "version": "1.0.0",
-  "description": "- [ ] Trending movies\r - [ ] Trending TV shows\r - [ ] Popular TV series list\r - [ ] Popular movies\r - [ ] Upcoming movies\r - [ ] Search movie with query\r - [ ] Search TV shows with query",
-  "main": "api.js",
+  "description": "yo",
+  "main": "server.js",
   "type": "module",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon run api.js"
   },
