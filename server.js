@@ -1,10 +1,11 @@
 import express from "express";
 import axios from "axios";
 import dotenv from 'dotenv';
+import cors from "cors";
 dotenv.config();
 
-const app = express(); 
-app.use(cors()); 
+const app = express();
+app.use(cors());
 const PORT = process.env.PORT || 3000;
 
 const imageUrl = "https://image.tmdb.org/t/p/w500";
