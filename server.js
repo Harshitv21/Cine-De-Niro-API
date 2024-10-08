@@ -56,8 +56,12 @@ app.get("/trending-movies", async (request, response) => {
         const trendingMovieArray = trendingData.slice(0, 20).map(movie => ({
             id: movie.id,
             title: movie.title,
+            original_title: movie.original_title,
+            overview: movie.overview,
             backdrop_path: imageUrl + movie.backdrop_path,
-            overview: movie.overview
+            poster_path: imageUrl + movie.poster_path,
+            release_date: movie.release_date,
+            vote_average: movie.vote_average
         }));
 
         response.send(trendingMovieArray);
@@ -77,11 +81,15 @@ app.get("/trending-tv", async (request, response) => {
         const trending = await axios.get(url, options);
         const trendingData = trending.data.results;
 
-        const trendingTVArray = trendingData.slice(0, 20).map(movie => ({
-            id: movie.id,
-            title: movie.name,
-            backdrop_path: imageUrl + movie.backdrop_path,
-            overview: movie.overview
+        const trendingTVArray = trendingData.slice(0, 20).map(tv => ({
+            id: tv.id,
+            title: tv.name,
+            original_name: tv.original_name,
+            overview: tv.overview,
+            backdrop_path: imageUrl + tv.backdrop_path,
+            poster_path: imageUrl + tv.poster_path,
+            release_date: tv.first_air_date,
+            vote_average: tv.vote_average
         }));
 
         response.send(trendingTVArray);
@@ -102,11 +110,17 @@ app.get("/popular-tv", async (request, response) => {
         const popular = await axios.get(url, options);
         const popularData = popular.data.results;
 
-        const popularTVArray = popularData.slice(0, 20).map(movie => ({
-            id: movie.id,
-            title: movie.name,
-            backdrop_path: imageUrl + movie.backdrop_path,
-            overview: movie.overview
+        const popularTVArray = popularData.slice(0, 20).map(tv => ({
+            id: tv.id,
+            title: tv.name,
+            original_language: tv.original_language,
+            name: tv.name,
+            original_name: tv.original_name,
+            overview: tv.overview,
+            backdrop_path: imageUrl + tv.backdrop_path,
+            poster_path: imageUrl + tv.poster_path,
+            release_date: tv.first_air_date,
+            vote_average: tv.vote_average
         }));
 
         response.send(popularTVArray);
@@ -128,9 +142,14 @@ app.get("/popular-movies", async (request, response) => {
 
         const popularMovieArray = popularData.slice(0, 20).map(movie => ({
             id: movie.id,
+            original_language: movie.original_language,
+            original_title: movie.original_title,
             title: movie.title,
+            overview: movie.overview,
             backdrop_path: imageUrl + movie.backdrop_path,
-            overview: movie.overview
+            poster_path: imageUrl + movie.poster_path,
+            release_date: movie.release_date,
+            vote_average: movie.vote_average
         }));
 
         response.send(popularMovieArray);
@@ -152,9 +171,14 @@ app.get("/upcoming-movies", async (request, response) => {
 
         const upcomingMovieArray = upcomingData.slice(0, 20).map(movie => ({
             id: movie.id,
+            original_language: movie.original_language,
+            original_title: movie.original_title,
+            overview: movie.overview,
             title: movie.title,
             backdrop_path: imageUrl + movie.backdrop_path,
-            overview: movie.overview
+            poster_path: imageUrl + movie.poster_path,
+            release_date: movie.release_date,
+            vote_average: movie.vote_average
         }));
 
         response.send(upcomingMovieArray);
@@ -193,9 +217,39 @@ app.get("/trending-anime", async (request, response) => {
         const trendingAnimeData = trending.data.data;
 
         const trendingAnimeArray = trendingAnimeData.slice(0, 20).map(anime => ({
-            id: anime.mal_id,
-            title: anime.titles[0].title,
-            image: anime.images.jpg.large_image_url
+            mal_id: anime.mal_id,
+            mal_url: anime.url,
+            images: [
+                anime.images.jpg.image_url,
+                anime.images.jpg.large_image_url,
+                anime.trailer.images?.maximum_image_url || null
+            ],
+            trailer: {
+                yt_id: anime.trailer.youtube_id,
+                yt_url: anime.trailer.url,
+                embed_url: anime.trailer.embed_url
+            },
+            titles: {
+                default_title: anime.title,
+                japanese_title: anime.title_japanese,
+                english_title: anime.title_english
+            },
+            episodes: anime.episodes,
+            rating: anime.rating,
+            type: anime.type,
+            source: anime.source,
+            status: anime.status,
+            score: anime.score,
+            rank: anime.rank,
+            popularity: anime.popularity,
+            synopsis: anime.synopsis,
+            backgroud: anime.backgroud,
+            season: anime.season,
+            year: anime.year,
+            genres: anime.genres.map(genre => genre.name),
+            themes: anime.themes.map(theme => theme.name),
+            demographics: anime.demographics.map(demographic => demographic.name),
+            explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
         response.send(trendingAnimeArray);
@@ -215,9 +269,39 @@ app.get("/popular-anime", async (request, response) => {
         const popularAnimeData = popular.data.data;
 
         const popularAnimeArray = popularAnimeData.slice(0, 20).map(anime => ({
-            id: anime.mal_id,
-            title: anime.titles[0].title,
-            image: anime.images.jpg.large_image_url
+            mal_id: anime.mal_id,
+            mal_url: anime.url,
+            images: [
+                anime.images.jpg.image_url,
+                anime.images.jpg.large_image_url,
+                anime.trailer.images?.maximum_image_url || null
+            ],
+            trailer: {
+                yt_id: anime.trailer.youtube_id,
+                yt_url: anime.trailer.url,
+                embed_url: anime.trailer.embed_url
+            },
+            titles: {
+                default_title: anime.title,
+                japanese_title: anime.title_japanese,
+                english_title: anime.title_english
+            },
+            episodes: anime.episodes,
+            rating: anime.rating,
+            type: anime.type,
+            source: anime.source,
+            status: anime.status,
+            score: anime.score,
+            rank: anime.rank,
+            popularity: anime.popularity,
+            synopsis: anime.synopsis,
+            backgroud: anime.backgroud,
+            season: anime.season,
+            year: anime.year,
+            genres: anime.genres.map(genre => genre.name),
+            themes: anime.themes.map(theme => theme.name),
+            demographics: anime.demographics.map(demographic => demographic.name),
+            explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
         response.send(popularAnimeArray);
@@ -237,9 +321,39 @@ app.get("/upcoming-anime", async (request, response) => {
         const upcomingAnimeData = upcoming.data.data;
 
         const upcomingAnimeArray = upcomingAnimeData.slice(0, 20).map(anime => ({
-            id: anime.mal_id,
-            title: anime.titles[0].title,
-            image: anime.images.jpg.large_image_url
+            mal_id: anime.mal_id,
+            mal_url: anime.url,
+            images: [
+                anime.images.jpg.image_url,
+                anime.images.jpg.large_image_url,
+                anime.trailer.images?.maximum_image_url || null
+            ],
+            trailer: {
+                yt_id: anime.trailer.youtube_id,
+                yt_url: anime.trailer.url,
+                embed_url: anime.trailer.embed_url
+            },
+            titles: {
+                default_title: anime.title,
+                japanese_title: anime.title_japanese,
+                english_title: anime.title_english
+            },
+            episodes: anime.episodes,
+            rating: anime.rating,
+            type: anime.type,
+            source: anime.source,
+            status: anime.status,
+            score: anime.score,
+            rank: anime.rank,
+            popularity: anime.popularity,
+            synopsis: anime.synopsis,
+            backgroud: anime.backgroud,
+            season: anime.season,
+            year: anime.year,
+            genres: anime.genres.map(genre => genre.name),
+            themes: anime.themes.map(theme => theme.name),
+            demographics: anime.demographics.map(demographic => demographic.name),
+            explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
         response.send(upcomingAnimeArray);
