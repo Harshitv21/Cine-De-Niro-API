@@ -4,35 +4,39 @@ name: CI/CD Pipeline for Anime & Movie API
 on:
   push:
     branches:
-      - main 
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2  
-        with:
-          node-version: '16'  
+    - name: Set up Node.js
+      uses: actions/setup-node@v3 
+      with:
+        node-version: '20'
 
-      # Step 3: Install dependencies
-      - name: Install dependencies
-        run: npm install
+    - name: Install dependencies
+      run: npm install
 
-      # Step 4: Run tests (optional)
-      - name: Run tests
-        run: npm test
+    - name: Run build
+      run: npm run build
 
-      # Step 5: Deploy to Elastic Beanstalk
-      - name: Deploy to Elastic Beanstalk
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}  # Fetch AWS credentials from secrets
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: "ap-south-1"  # Your AWS region
-        run: |
-          eb init --platform node.js --region ap-south-1  # Initialize EB environment
-          eb deploy  # Deploy the application to Elastic Beanstalk
+    - name: Deploy to Elastic Beanstalk
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'ap-south-1'
+        EB_ENV_NAME: 'your-eb-environment-name'
+        EB_APP_NAME: 'your-eb-app-name'
+      run: |
+        npx elastic-beanstalk-deploy \
+          --region $AWS_REGION \
+          --application-name $EB_APP_NAME \
+          --environment-name $EB_ENV_NAME
