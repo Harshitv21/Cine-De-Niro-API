@@ -24,7 +24,7 @@ const options = {
 /* =============================================== */
 /* *********************************************** */
 app.get("/", (request, response) => {
-    response.send("Welcome to TMDB + Jikan API 😎🫘");
+    response.status(200).send("Welcome to TMDB + Jikan API 😎🫘");
 });
 
 /* =============================================== */
