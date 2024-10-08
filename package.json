@@ -1,0 +1,19 @@
+{
+  "name": "tmdb-anime-api",
+  "version": "1.0.0",
+  "description": "- [ ] Trending movies\r - [ ] Trending TV shows\r - [ ] Popular TV series list\r - [ ] Popular movies\r - [ ] Upcoming movies\r - [ ] Search movie with query\r - [ ] Search TV shows with query",
+  "main": "api.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon run api.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  }
+}
