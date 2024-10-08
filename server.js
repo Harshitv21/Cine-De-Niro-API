@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express(); 
+app.use(cors()); 
 const PORT = process.env.PORT || 5033;
 
 const imageUrl = "https://image.tmdb.org/t/p/w500";
@@ -151,19 +152,19 @@ app.get("/upcoming-movies", async (request, response) => {
     }
 });
 
-app.get("/search-movie", async (request, response) => {
-    const query = request.query.q; // Get the search query from the query parameters
-    console.log(`Searching for movie: ${query}`);
-    // Replace with the actual TMDB API call
-    response.send(`Search results for movie: ${query}`);
-});
+// app.get("/search-movie", async (request, response) => {
+//     const query = request.query.q; // Get the search query from the query parameters
+//     console.log(`Searching for movie: ${query}`);
+//     // Replace with the actual TMDB API call
+//     response.send(`Search results for movie: ${query}`);
+// });
 
-app.get("/search-tv", async (request, response) => {
-    const query = request.query.q; // Get the search query from the query parameters
-    console.log(`Searching for TV show: ${query}`);
-    // Replace with the actual TMDB API call
-    response.send(`Search results for TV show: ${query}`);
-});
+// app.get("/search-tv", async (request, response) => {
+//     const query = request.query.q; // Get the search query from the query parameters
+//     console.log(`Searching for TV show: ${query}`);
+//     // Replace with the actual TMDB API call
+//     response.send(`Search results for TV show: ${query}`);
+// });
 
 /* =============================================== */
 /*                  JIKAN API ROUTES               */
@@ -236,11 +237,11 @@ app.get("/upcoming-anime", async (request, response) => {
     }
 });
 
-app.get("/search-anime", async (request, response) => {
-    const query = request.query.q; // Get the search query from the query parameters
-    console.log(`Searching for anime: ${query}`);
-    response.send(`Search results for anime: ${query}`);
-});
+// app.get("/search-anime", async (request, response) => {
+//     const query = request.query.q; // Get the search query from the query parameters
+//     console.log(`Searching for anime: ${query}`);
+//     response.send(`Search results for anime: ${query}`);
+// });
 
 // Start the server
 app.listen(PORT, () => {
