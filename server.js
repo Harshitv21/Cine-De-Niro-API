@@ -2,11 +2,21 @@ import express from "express";
 import axios from "axios";
 import dotenv from 'dotenv';
 import cors from "cors";
+import path from "path";             // Import path module to resolve file paths
+import { fileURLToPath } from 'url'; // Needed to resolve file path with ES modules
+
 dotenv.config();
 
 const app = express();
 app.use(cors());
+
 const PORT = process.env.PORT || 3000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Middleware to serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 const imageUrl = "https://image.tmdb.org/t/p/w500";
 const baseJikanUrl = "https://api.jikan.moe/v4";
@@ -23,8 +33,9 @@ const options = {
 /*                  BASE ROUTE                     */
 /* =============================================== */
 /* *********************************************** */
+// Serve index.html on the root route
 app.get("/", (request, response) => {
-    response.status(200).send("Welcome to TMDB + Jikan API 😎🫘");
+    response.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 /* =============================================== */
