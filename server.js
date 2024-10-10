@@ -11,12 +11,12 @@ const app = express();
 
 app.use(express.json());
 app.use((request, response, next) => {
-    response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:;");
+    response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';");
     next();
 });
 
 app.use(cors({
-    origin: "*",
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Authorization", "Content-Type"]
 }));
@@ -40,6 +40,10 @@ const options = {
     }
 };
 
+app.get('/health', (request, response) => {
+    response.status(200).send('Server is healthy!');
+});
+
 /* =============================================== */
 /*                  BASE ROUTE                     */
 /* =============================================== */
@@ -47,10 +51,6 @@ const options = {
 // Serve index.html on the root route
 app.get("/", (request, response) => {
     response.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-app.get('/health', (request, response) => {
-    response.send('Server is healthy!');
 });
 
 /* =============================================== */
@@ -411,6 +411,10 @@ app.get("/search-anime/:id", async (request, response) => {
         console.error("Error fetching queried anime:", err.response?.data || err.message);
         response.status(err.response?.status || 500).send("Error fetching queried anime :(");
     }
+});
+
+app.get('*', (request, response) => {
+    response.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start the server
