@@ -9,28 +9,45 @@ dotenv.config();
 
 const app = express();
 
+/*
+==========================================================================
+  __  __   _       _       _   _                                         
+ |  \/  | (_)     | |     | | | |                                        
+ | \  / |  _    __| |   __| | | |   ___  __      __   __ _   _ __    ___ 
+ | |\/| | | |  / _` |  / _` | | |  / _ \ \ \ /\ / /  / _` | | '__|  / _ \
+ | |  | | | | | (_| | | (_| | | | |  __/  \ V  V /  | (_| | | |    |  __/
+ |_|  |_| |_|  \__,_|  \__,_| |_|  \___|   \_/\_/    \__,_| |_|     \___|                                                 
+==========================================================================
+ */
 app.use(express.json());
+// Setting headers to avoid CSP errors (doesn't work tho)
 app.use((request, response, next) => {
     response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';");
     next();
 });
+// CORS middleware
 app.use(cors({
     origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : "*",
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization']
 }));
+// Middleware to serve static files from 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware to serve static files from 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-
+/* =============================================== */
+/*                  BASE URLS                      */
+/* =============================================== */
 const imageUrl = "https://image.tmdb.org/t/p/w500";
 const baseJikanUrl = "https://api.jikan.moe/v4";
 
+/* ============================================================== */
+/*                      Options for TMDB API                      */
+/* ============================================================== */
 const options = {
     method: 'GET',
     headers: {
@@ -39,23 +56,22 @@ const options = {
     }
 };
 
-app.get('/health', (request, response) => {
-    response.status(200).send('Server is healthy!');
-});
-
 /* =============================================== */
 /*                  BASE ROUTE                     */
 /* =============================================== */
-/* *********************************************** */
 // Serve index.html on the root route
 app.get("/", (request, response) => {
     response.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* =============================================== */
-/*                  TMDB API ROUTES                */
-/* =============================================== */
-/* *********************************************** */
+/* ========================================================================================================= 
+_______  __  __  _____   ____              _____  _____   _____    ____   _    _  _______  ______   _____ 
+|__   __||  \/  ||  __ \ |  _ \      /\    |  __ \|_   _| |  __ \  / __ \ | |  | ||__   __||  ____| / ____|
+   | |   | \  / || |  | || |_) |    /  \   | |__) | | |   | |__) || |  | || |  | |   | |   | |__   | (___  
+   | |   | |\/| || |  | ||  _ <    / /\ \  |  ___/  | |   |  _  / | |  | || |  | |   | |   |  __|   \___ \ 
+   | |   | |  | || |__| || |_) |  / ____ \ | |     _| |_  | | \ \ | |__| || |__| |   | |   | |____  ____) |
+   |_|   |_|  |_||_____/ |____/  /_/    \_\|_|    |_____| |_|  \_\ \____/  \____/    |_|   |______||_____/                                                                                                            
+/* =========================================================================================================
 
 /* =============================================== */
 /*                  Trending movies                */
@@ -112,7 +128,6 @@ app.get("/trending-tv", async (request, response) => {
         response.status(500).send("Error fetching trending tv.");
     }
 });
-
 
 /* =============================================== */
 /*                  Popular TV                     */
@@ -202,24 +217,14 @@ app.get("/upcoming-movies", async (request, response) => {
     }
 });
 
-// app.get("/search-movie", async (request, response) => {
-//     const query = request.query.q; // Get the search query from the query parameters
-//     console.log(`Searching for movie: ${query}`);
-//     // Replace with the actual TMDB API call
-//     response.send(`Search results for movie: ${query}`);
-// });
-
-// app.get("/search-tv", async (request, response) => {
-//     const query = request.query.q; // Get the search query from the query parameters
-//     console.log(`Searching for TV show: ${query}`);
-//     // Replace with the actual TMDB API call
-//     response.send(`Search results for TV show: ${query}`);
-// });
-
-/* =============================================== */
-/*                  JIKAN API ROUTES               */
-/* =============================================== */
-/* *********************************************** */
+/* ===============================================================================================================
+       _  _____  _  __           _   _             _____  _____   _____    ____   _    _  _______  ______   _____ 
+      | ||_   _|| |/ /    /\    | \ | |     /\    |  __ \|_   _| |  __ \  / __ \ | |  | ||__   __||  ____| / ____|
+      | |  | |  | ' /    /  \   |  \| |    /  \   | |__) | | |   | |__) || |  | || |  | |   | |   | |__   | (___  
+  _   | |  | |  |  <    / /\ \  | . ` |   / /\ \  |  ___/  | |   |  _  / | |  | || |  | |   | |   |  __|   \___ \ 
+ | |__| | _| |_ | . \  / ____ \ | |\  |  / ____ \ | |     _| |_  | | \ \ | |__| || |__| |   | |   | |____  ____) |
+  \____/ |_____||_|\_\/_/    \_\|_| \_| /_/    \_\|_|    |_____| |_|  \_\ \____/  \____/    |_|   |______||_____/ 
+/* ===============================================================================================================
 
 /* =============================================== */
 /*                  Trending anime                 */
@@ -377,11 +382,16 @@ app.get("/upcoming-anime", async (request, response) => {
     }
 });
 
+/* ================================================================================= */
+/*                 Default path to handle invalid endpoints requests                 */
+/* ================================================================================= */
 app.get('*', (request, response) => {
-    response.sendFile(path.join(__dirname, 'public', 'index.html'));
+    response.sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
-// Start the server
+/* ============================================= */
+/*                    LISTEN!                    */
+/* ============================================= */
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });
