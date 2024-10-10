@@ -8,7 +8,12 @@ import { fileURLToPath } from 'url'; // Needed to resolve file path with ES modu
 dotenv.config();
 
 const app = express();
+
 app.use(cors());
+app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "default-src 'none'; img-src 'self' data: https:");
+    next();
+});
 
 const PORT = process.env.PORT || 3000;
 
