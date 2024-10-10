@@ -2,23 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:;">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Anime & Movie API</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.6;
+      background-color: #f0f0f0;
+      color: #333;
       padding: 20px;
-      background-color: #f4f4f4;
     }
 
     h1 {
-      color: #333;
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      font-size: 2.5em;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     h2 {
-      color: #555;
+      color: #34495e;
+      margin-top: 20px;
+      font-size: 1.8em;
+    }
+
+    h3 {
+      color: #16a085;
+      margin-top: 15px;
+      font-size: 1.5em;
     }
 
     .container {
@@ -27,29 +46,58 @@
       background-color: white;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
 
     ul {
       list-style: none;
       padding: 0;
+      margin-top: 10px;
     }
 
     li {
-      padding: 8px 0;
+      padding: 10px 0;
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    li:last-child {
+      border-bottom: none;
     }
 
     code {
-      background-color: #f9f9f9;
-      padding: 2px 4px;
+      background-color: #e8f8f5;
+      padding: 2px 6px;
       border-radius: 4px;
       font-size: 1em;
+      color: #2980b9;
     }
 
     footer {
       margin-top: 30px;
       text-align: center;
       font-size: 0.9em;
+      color: #777;
+    }
+
+    footer p {
+      margin: 5px 0;
+    }
+
+    .api-description {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+      color: #555;
+    }
+
+    /* Responsive styles */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2em;
+      }
+
+      h2, h3 {
+        font-size: 1.4em;
+      }
     }
   </style>
 </head>
@@ -58,32 +106,32 @@
   <div class="container">
     <h1>Anime & Movie API</h1>
 
-    <p>This API provides access to trending, popular, and upcoming anime, movies and TV shows. It leverages the <strong>Jikan API</strong> for anime data and the <strong>TMDB API</strong> for movie & TV shows data. Integrate these endpoints into your applications to fetch anime, movie and TV shows information.</p>
+    <p class="api-description">This API provides access to trending, popular, and upcoming anime, movies, and TV shows. It leverages the <strong>Jikan API</strong> for anime data and the <strong>TMDB API</strong> for movie & TV show data. Integrate these endpoints into your applications to fetch information about anime, movies, and TV shows.</p>
 
     <h2>Features</h2>
 
     <h3>Anime Endpoints</h3>
     <ul>
-      <li><code>GET</code> <strong>/trending/anime</strong> - Fetch the currently trending anime series.</li>
+      <li><code>GET</code> <strong>/trending/anime</strong> - Fetch currently trending anime series.</li>
       <li><code>GET</code> <strong>/popular/anime</strong> - Retrieve a list of popular anime series.</li>
       <li><code>GET</code> <strong>/upcoming/anime</strong> - Get information about upcoming anime releases.</li>
     </ul>
 
     <h3>Movie Endpoints</h3>
     <ul>
-      <li><code>GET</code> <strong>/trending/movies</strong> - Fetch the currently trending movies.</li>
+      <li><code>GET</code> <strong>/trending/movies</strong> - Fetch currently trending movies.</li>
       <li><code>GET</code> <strong>/popular/movies</strong> - Retrieve a list of popular movies.</li>
       <li><code>GET</code> <strong>/upcoming/movies</strong> - Get information about upcoming movie releases.</li>
     </ul>
 
     <h3>TV Endpoints</h3>
     <ul>
-      <li><code>GET</code> <strong>/trending/tv</strong> - Fetch the currently trending tv shows.</li>
-      <li><code>GET</code> <strong>/popular/tv</strong> - Retrieve a list of popular tv shows.</li>
+      <li><code>GET</code> <strong>/trending/tv</strong> - Fetch currently trending TV shows.</li>
+      <li><code>GET</code> <strong>/popular/tv</strong> - Retrieve a list of popular TV shows.</li>
     </ul>
 
     <footer>
-      <p>Anime & Movie API &copy; 2024</p>
+      <p>Made with ❤️ for anime and movie enthusiasts!</p>
     </footer>
   </div>
 
