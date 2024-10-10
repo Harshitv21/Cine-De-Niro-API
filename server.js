@@ -9,9 +9,13 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
-app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", "default-src 'none'; img-src 'self' data: https:");
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Authorization", "Content-Type"]
+}));
+app.use((request, response, next) => {
+    response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' https: data:; script-src 'self' https:; connect-src 'self' https:");
     next();
 });
 
