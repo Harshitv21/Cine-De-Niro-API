@@ -38,6 +38,7 @@ jobs:
         version_label: v1
         region: ap-south-1
         deployment_package: app.zip
+        use_existing_version_if_available: true
 
     - name: Verify Deployment
       run: |
