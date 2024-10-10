@@ -11,9 +11,10 @@ const app = express();
 
 app.use(express.json());
 app.use((request, response, next) => {
-    response.setHeader("Content-Security-Policy", "default-src 'self' https:; img-src 'self' https: data:; script-src 'self' https:");
+    response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:;");
     next();
 });
+
 app.use(cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -48,8 +49,8 @@ app.get("/", (request, response) => {
     response.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get('/health', (req, res) => {
-    res.send('Server is healthy!');
+app.get('/health', (request, response) => {
+    response.send('Server is healthy!');
 });
 
 /* =============================================== */
