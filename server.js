@@ -399,6 +399,26 @@ app.get("/search/anime/:id", async (request, response) => {
     }
 });
 
+/* ===================================================== */
+/*                 Search anime by query                 */
+/* ===================================================== */
+app.get("/search/anime", async (request, response) => {
+    const queryParams = request.query;
+    // constructing the query string
+    const queryString = new URLSearchParams(queryParams).toString();
+    try {
+        const searchAnimeUrl = queryString
+            ? `${baseJikanUrl}/anime?${queryString}`
+            : `${baseJikanUrl}/anime`;
+        const searchAnime = await axios.get(searchAnimeUrl);
+        const searchAnimeData = searchAnime.data;
+        response.send(searchAnimeData);
+    } catch (err) {
+        console.error("Error fetching queried anime:", err);
+        response.status(500).send("Error fetching queried anime :(");
+    }
+});
+
 /* ================================================================================= */
 /*                 Default path to handle invalid endpoints requests                 */
 /* ================================================================================= */
