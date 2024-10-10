@@ -58,22 +58,28 @@
   <div class="container">
     <h1>Anime & Movie API</h1>
 
-    <p>This API provides access to trending, popular, and upcoming anime and movies. It leverages the <strong>Jikan API</strong> for anime data and the <strong>TMDB API</strong> for movie data. Integrate these endpoints into your applications to fetch anime and movie information.</p>
+    <p>This API provides access to trending, popular, and upcoming anime, movies and TV shows. It leverages the <strong>Jikan API</strong> for anime data and the <strong>TMDB API</strong> for movie & TV shows data. Integrate these endpoints into your applications to fetch anime, movie and TV shows information.</p>
 
     <h2>Features</h2>
 
     <h3>Anime Endpoints</h3>
     <ul>
-      <li><code>GET</code> <strong>/anime/trending</strong> - Fetch the currently trending anime series.</li>
-      <li><code>GET</code> <strong>/anime/popular</strong> - Retrieve a list of popular anime series.</li>
-      <li><code>GET</code> <strong>/anime/upcoming</strong> - Get information about upcoming anime releases.</li>
+      <li><code>GET</code> <strong>/trending/anime</strong> - Fetch the currently trending anime series.</li>
+      <li><code>GET</code> <strong>/popular/anime</strong> - Retrieve a list of popular anime series.</li>
+      <li><code>GET</code> <strong>/upcoming/anime</strong> - Get information about upcoming anime releases.</li>
     </ul>
 
     <h3>Movie Endpoints</h3>
     <ul>
-      <li><code>GET</code> <strong>/movies/trending</strong> - Fetch the currently trending movies.</li>
-      <li><code>GET</code> <strong>/movies/popular</strong> - Retrieve a list of popular movies.</li>
-      <li><code>GET</code> <strong>/movies/upcoming</strong> - Get information about upcoming movie releases.</li>
+      <li><code>GET</code> <strong>/trending/movies</strong> - Fetch the currently trending movies.</li>
+      <li><code>GET</code> <strong>/popular/movies</strong> - Retrieve a list of popular movies.</li>
+      <li><code>GET</code> <strong>/upcoming/movies</strong> - Get information about upcoming movie releases.</li>
+    </ul>
+
+    <h3>TV Endpoints</h3>
+    <ul>
+      <li><code>GET</code> <strong>/trending/tv</strong> - Fetch the currently trending tv shows.</li>
+      <li><code>GET</code> <strong>/popular/tv</strong> - Retrieve a list of popular tv shows.</li>
     </ul>
 
     <footer>

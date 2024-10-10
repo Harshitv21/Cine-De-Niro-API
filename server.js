@@ -77,7 +77,7 @@ _______  __  __  _____   ____              _____  _____   _____    ____   _    _
 /* =============================================== */
 /*                  Trending movies                */
 /* =============================================== */
-app.get("/trending-movies", async (request, response) => {
+app.get("/trending/movies", async (request, response) => {
     try {
         const url = "https://api.themoviedb.org/3/trending/movie/week?language=en-US";
 
@@ -103,67 +103,9 @@ app.get("/trending-movies", async (request, response) => {
 });
 
 /* =============================================== */
-/*                  Trending TV                    */
-/* =============================================== */
-app.get("/trending-tv", async (request, response) => {
-    try {
-        const url = "https://api.themoviedb.org/3/trending/tv/week?language=en-US";
-
-        const trending = await axios.get(url, options);
-        const trendingData = trending.data.results;
-
-        const trendingTVArray = trendingData.slice(0, 20).map(tv => ({
-            id: tv.id,
-            title: tv.name,
-            original_name: tv.original_name,
-            overview: tv.overview,
-            backdrop_path: imageUrl + tv.backdrop_path,
-            poster_path: imageUrl + tv.poster_path,
-            release_date: tv.first_air_date,
-            vote_average: tv.vote_average
-        }));
-
-        response.send(trendingTVArray);
-    } catch (err) {
-        console.error("Error fetching trending tv:", err);
-        response.status(500).send("Error fetching trending tv.");
-    }
-});
-
-/* =============================================== */
-/*                  Popular TV                     */
-/* =============================================== */
-app.get("/popular-tv", async (request, response) => {
-    try {
-        const url = "https://api.themoviedb.org/3/tv/top_rated?language=en-US&page=1";
-
-        const popular = await axios.get(url, options);
-        const popularData = popular.data.results;
-
-        const popularTVArray = popularData.slice(0, 20).map(tv => ({
-            id: tv.id,
-            title: tv.name,
-            original_language: tv.original_language,
-            name: tv.name,
-            original_name: tv.original_name,
-            overview: tv.overview,
-            backdrop_path: imageUrl + tv.backdrop_path,
-            poster_path: imageUrl + tv.poster_path,
-            release_date: tv.first_air_date,
-            vote_average: tv.vote_average
-        }));
-
-        response.send(popularTVArray);
-    } catch (err) {
-        console.error("Error fetching trending tv:", err);
-        response.status(500).send("Error fetching trending tv.");
-    }
-});
-
-/* =============================================== */
 /*                  Popular movies                 */
 /* =============================================== */
-app.get("/popular-movies", async (request, response) => {
+app.get("/popular/movies", async (request, response) => {
     try {
         const url = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1";
 
@@ -192,7 +134,7 @@ app.get("/popular-movies", async (request, response) => {
 /* =============================================== */
 /*                  Upcoming movies                */
 /* =============================================== */
-app.get("/upcoming-movies", async (request, response) => {
+app.get("/upcoming/movies", async (request, response) => {
     try {
         const url = "https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1";
 
@@ -218,6 +160,64 @@ app.get("/upcoming-movies", async (request, response) => {
     }
 });
 
+/* =============================================== */
+/*                  Trending TV                    */
+/* =============================================== */
+app.get("/trending/tv", async (request, response) => {
+    try {
+        const url = "https://api.themoviedb.org/3/trending/tv/week?language=en-US";
+
+        const trending = await axios.get(url, options);
+        const trendingData = trending.data.results;
+
+        const trendingTVArray = trendingData.slice(0, 20).map(tv => ({
+            id: tv.id,
+            title: tv.name,
+            original_name: tv.original_name,
+            overview: tv.overview,
+            backdrop_path: imageUrl + tv.backdrop_path,
+            poster_path: imageUrl + tv.poster_path,
+            release_date: tv.first_air_date,
+            vote_average: tv.vote_average
+        }));
+
+        response.send(trendingTVArray);
+    } catch (err) {
+        console.error("Error fetching trending tv:", err);
+        response.status(500).send("Error fetching trending tv.");
+    }
+});
+
+/* =============================================== */
+/*                  Popular TV                     */
+/* =============================================== */
+app.get("/popular/tv", async (request, response) => {
+    try {
+        const url = "https://api.themoviedb.org/3/tv/top_rated?language=en-US&page=1";
+
+        const popular = await axios.get(url, options);
+        const popularData = popular.data.results;
+
+        const popularTVArray = popularData.slice(0, 20).map(tv => ({
+            id: tv.id,
+            title: tv.name,
+            original_language: tv.original_language,
+            name: tv.name,
+            original_name: tv.original_name,
+            overview: tv.overview,
+            backdrop_path: imageUrl + tv.backdrop_path,
+            poster_path: imageUrl + tv.poster_path,
+            release_date: tv.first_air_date,
+            vote_average: tv.vote_average
+        }));
+
+        response.send(popularTVArray);
+    } catch (err) {
+        console.error("Error fetching trending tv:", err);
+        response.status(500).send("Error fetching trending tv.");
+    }
+});
+
 /* ===============================================================================================================
        _  _____  _  __           _   _             _____  _____   _____    ____   _    _  _______  ______   _____ 
       | ||_   _|| |/ /    /\    | \ | |     /\    |  __ \|_   _| |  __ \  / __ \ | |  | ||__   __||  ____| / ____|
@@ -230,7 +230,7 @@ app.get("/upcoming-movies", async (request, response) => {
 /* =============================================== */
 /*                  Trending anime                 */
 /* =============================================== */
-app.get("/trending-anime", async (request, response) => {
+app.get("/trending/anime", async (request, response) => {
     try {
         const trendingAnimeUrl = `${baseJikanUrl}/seasons/now`;
         const trending = await axios.get(trendingAnimeUrl);
@@ -282,7 +282,7 @@ app.get("/trending-anime", async (request, response) => {
 /* =============================================== */
 /*                  Popular anime                  */
 /* =============================================== */
-app.get("/popular-anime", async (request, response) => {
+app.get("/popular/anime", async (request, response) => {
     try {
         const popularAnimeUrl = `${baseJikanUrl}/top/anime`;
         const popular = await axios.get(popularAnimeUrl);
@@ -334,7 +334,7 @@ app.get("/popular-anime", async (request, response) => {
 /* =============================================== */
 /*                  Upcoming anime                 */
 /* =============================================== */
-app.get("/upcoming-anime", async (request, response) => {
+app.get("/upcoming/anime", async (request, response) => {
     try {
         const upcomingAnimeUrl = `${baseJikanUrl}/seasons/upcoming`;
         const upcoming = await axios.get(upcomingAnimeUrl);
