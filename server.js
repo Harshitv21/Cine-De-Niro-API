@@ -363,11 +363,38 @@ app.get("/upcoming-anime", async (request, response) => {
     }
 });
 
-// app.get("/search-anime", async (request, response) => {
-//     const query = request.query.q; // Get the search query from the query parameters
-//     console.log(`Searching for anime: ${query}`);
-//     response.send(`Search results for anime: ${query}`);
-// });
+app.get("/search-anime", async (request, response) => {
+    const queryParams = request.query;
+    // constructing the query string
+    const queryString = new URLSearchParams(queryParams).toString();
+    try {
+        const searchAnimeUrl = queryString
+            ? `${baseJikanUrl}/anime?${queryString}`
+            : `${baseJikanUrl}/anime`;
+
+        const searchAnime = await axios.get(searchAnimeUrl);
+        const searchAnimeData = searchAnime.data;
+
+        response.send(searchAnimeData);
+    } catch (err) {
+        console.error("Error fetching queried anime:", err);
+        response.status(500).send("Error fetching queried anime :(");
+    }
+});
+
+app.get("/search-anime/:id", async (request, response) => {
+    const animeId = request.params.id;
+    
+    try {
+        const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
+        const searchAnimeData = searchAnime.data;
+
+        response.send(searchAnimeData);
+    } catch (err) {
+        console.error("Error fetching queried anime:", err);
+        response.status(500).send("Error fetching queried anime :(");
+    }
+});
 
 // Start the server
 app.listen(PORT, () => {
