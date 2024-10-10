@@ -17,8 +17,8 @@ app.use((request, response, next) => {
 
 app.use(cors({
     origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Authorization", "Content-Type"]
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 const PORT = process.env.PORT || 3000;
@@ -388,7 +388,7 @@ app.get("/search-anime", async (request, response) => {
             : `${baseJikanUrl}/anime`;
 
         const searchAnime = await axios.get(searchAnimeUrl);
-        const searchAnimeData = searchAnime.data;
+        const searchAnimeData = searchAnime.data.data;
 
         response.send(searchAnimeData);
     } catch (err) {
@@ -404,7 +404,7 @@ app.get("/search-anime/:id", async (request, response) => {
     try {
         const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
         console.log(`Jikan API Response: ${searchAnime.status}`, searchAnime.data);
-        const searchAnimeData = searchAnime.data;
+        const searchAnimeData = searchAnime.data.data;
 
         response.send(searchAnimeData);
     } catch (err) {
