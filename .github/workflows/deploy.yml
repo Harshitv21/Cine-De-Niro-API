@@ -34,10 +34,10 @@ jobs:
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: Anime-Movie-API      
         environment_name: Anime-Movie-API-env  
-        version_label: v1
+        version_label: ${{ github.run_id }}-${{ github.run_number }}
         region: ap-south-1
         deployment_package: app.zip
-        update_environment: true 
+        use_existing_version_if_available: false
 
     - name: Verify Deployment
       run: |
