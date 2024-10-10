@@ -15,7 +15,7 @@ app.use(cors({
     allowedHeaders: ["Authorization", "Content-Type"]
 }));
 app.use((request, response, next) => {
-    response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' https: data:; script-src 'self' https:; connect-src 'self' https:");
+    response.setHeader("Content-Security-Policy", "default-src 'self' https:; img-src 'self' https: data:; script-src 'self' https:");
     next();
 });
 
@@ -393,9 +393,11 @@ app.get("/search-anime", async (request, response) => {
 
 app.get("/search-anime/:id", async (request, response) => {
     const animeId = request.params.id;
+    console.log(`Received request for anime ID: ${animeId}`); 
     
     try {
         const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
+        console.log(`Jikan API Response: ${searchAnime.status}`, searchAnime.data);
         const searchAnimeData = searchAnime.data;
 
         response.send(searchAnimeData);
