@@ -14,7 +14,6 @@ app.use((request, response, next) => {
     response.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';");
     next();
 });
-
 app.use(cors({
     origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : "*",
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -375,41 +374,6 @@ app.get("/upcoming-anime", async (request, response) => {
     } catch (err) {
         console.error("Error fetching popular anime:", err);
         response.status(500).send("Error fetching popular anime.");
-    }
-});
-
-app.get("/search-anime", async (request, response) => {
-    const queryParams = request.query;
-    // constructing the query string
-    const queryString = new URLSearchParams(queryParams).toString();
-    try {
-        const searchAnimeUrl = queryString
-            ? `${baseJikanUrl}/anime?${queryString}`
-            : `${baseJikanUrl}/anime`;
-
-        const searchAnime = await axios.get(searchAnimeUrl);
-        const searchAnimeData = searchAnime.data.data;
-
-        response.send(searchAnimeData);
-    } catch (err) {
-        console.error("Error fetching queried anime:", err);
-        response.status(500).send("Error fetching queried anime :(");
-    }
-});
-
-app.get("/search-anime/:id", async (request, response) => {
-    const animeId = request.params.id;
-    console.log(`Received request for anime ID: ${animeId}`);
-
-    try {
-        const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
-        console.log(`Jikan API Response: ${searchAnime.status}`, searchAnime.data);
-        const searchAnimeData = searchAnime.data.data;
-
-        response.send(searchAnimeData);
-    } catch (err) {
-        console.error("Error fetching queried anime:", err.response?.data || err.message);
-        response.status(err.response?.status || 500).send("Error fetching queried anime :(");
     }
 });
 
