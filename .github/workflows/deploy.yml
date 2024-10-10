@@ -1,4 +1,3 @@
-
 name: CI/CD Pipeline for Anime & Movie API  
 
 on:
@@ -38,7 +37,7 @@ jobs:
         version_label: v1
         region: ap-south-1
         deployment_package: app.zip
-        use_existing_version_if_available: true
+        update_environment: true 
 
     - name: Verify Deployment
       run: |
