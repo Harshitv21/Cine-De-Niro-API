@@ -9,15 +9,16 @@ dotenv.config();
 
 const app = express();
 
+app.use(express.json());
+app.use((request, response, next) => {
+    response.setHeader("Content-Security-Policy", "default-src 'self' https:; img-src 'self' https: data:; script-src 'self' https:");
+    next();
+});
 app.use(cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Authorization", "Content-Type"]
 }));
-app.use((request, response, next) => {
-    response.setHeader("Content-Security-Policy", "default-src 'self' https:; img-src 'self' https: data:; script-src 'self' https:");
-    next();
-});
 
 const PORT = process.env.PORT || 3000;
 
@@ -45,6 +46,10 @@ const options = {
 // Serve index.html on the root route
 app.get("/", (request, response) => {
     response.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get('/health', (req, res) => {
+    res.send('Server is healthy!');
 });
 
 /* =============================================== */
@@ -393,8 +398,8 @@ app.get("/search-anime", async (request, response) => {
 
 app.get("/search-anime/:id", async (request, response) => {
     const animeId = request.params.id;
-    console.log(`Received request for anime ID: ${animeId}`); 
-    
+    console.log(`Received request for anime ID: ${animeId}`);
+
     try {
         const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
         console.log(`Jikan API Response: ${searchAnime.status}`, searchAnime.data);
@@ -402,8 +407,8 @@ app.get("/search-anime/:id", async (request, response) => {
 
         response.send(searchAnimeData);
     } catch (err) {
-        console.error("Error fetching queried anime:", err);
-        response.status(500).send("Error fetching queried anime :(");
+        console.error("Error fetching queried anime:", err.response?.data || err.message);
+        response.status(err.response?.status || 500).send("Error fetching queried anime :(");
     }
 });
 
