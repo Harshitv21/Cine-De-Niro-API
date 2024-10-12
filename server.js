@@ -43,6 +43,7 @@ const PORT = process.env.PORT || 3000;
 /* =============================================== */
 /*                  BASE URLS                      */
 /* =============================================== */
+const tmdbUrl = "https://api.themoviedb.org/3";
 const imageUrl = "https://image.tmdb.org/t/p/w500";
 const baseJikanUrl = "https://api.jikan.moe/v4";
 
@@ -79,7 +80,7 @@ _______  __  __  _____   ____              _____  _____   _____    ____   _    _
 /* =============================================== */
 app.get("/trending/movies", async (request, response) => {
     try {
-        const url = "https://api.themoviedb.org/3/trending/movie/week?language=en-US";
+        const url = `${tmdbUrl}/trending/movie/week?language=en-US`;
 
         const trending = await axios.get(url, options);
         const trendingData = trending.data.results;
@@ -107,7 +108,7 @@ app.get("/trending/movies", async (request, response) => {
 /* =============================================== */
 app.get("/popular/movies", async (request, response) => {
     try {
-        const url = "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1";
+        const url = `${tmdbUrl}/movie/popular?language=en-US&page=1`;
 
         const popular = await axios.get(url, options);
         const popularData = popular.data.results;
@@ -136,7 +137,7 @@ app.get("/popular/movies", async (request, response) => {
 /* =============================================== */
 app.get("/upcoming/movies", async (request, response) => {
     try {
-        const url = "https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1";
+        const url = `${tmdbUrl}/movie/upcoming?language=en-US&page=1`;
 
         const upcoming = await axios.get(url, options);
         const upcomingData = upcoming.data.results;
@@ -165,7 +166,7 @@ app.get("/upcoming/movies", async (request, response) => {
 /* =============================================== */
 app.get("/trending/tv", async (request, response) => {
     try {
-        const url = "https://api.themoviedb.org/3/trending/tv/week?language=en-US";
+        const url = `${tmdbUrl}/trending/tv/week?language=en-US`;
 
         const trending = await axios.get(url, options);
         const trendingData = trending.data.results;
@@ -193,7 +194,7 @@ app.get("/trending/tv", async (request, response) => {
 /* =============================================== */
 app.get("/popular/tv", async (request, response) => {
     try {
-        const url = "https://api.themoviedb.org/3/tv/top_rated?language=en-US&page=1";
+        const url = `${tmdbUrl}/tv/top_rated?language=en-US&page=1`;
 
         const popular = await axios.get(url, options);
         const popularData = popular.data.results;
