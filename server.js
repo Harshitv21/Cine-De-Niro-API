@@ -129,6 +129,7 @@ app.get("/trending/movies", async (request, response) => {
             vote_average: movie.vote_average
         }));
 
+        logger.info(`Successfully fetched trending movies at ${new Date().toISOString()}`);
         response.send(trendingMovieArray);
     } catch (err) {
         if (err.response) {
@@ -166,6 +167,7 @@ app.get("/popular/movies", async (request, response) => {
             vote_average: movie.vote_average
         }));
 
+        logger.info(`Successfully fetched popular movies at ${new Date().toISOString()}`);
         response.send(popularMovieArray);
     } catch (err) {
         if (err.response) {
@@ -203,6 +205,7 @@ app.get("/upcoming/movies", async (request, response) => {
             vote_average: movie.vote_average
         }));
 
+        logger.info(`Successfully fetched upcoming movies at ${new Date().toISOString()}`);
         response.send(upcomingMovieArray);
     } catch (err) {
         if (err.response) {
@@ -253,6 +256,7 @@ app.get("/search/movies", async (request, response) => {
             vote_average: movie.vote_average
         }));
 
+        logger.info(`Successfully fetched movies for query "${query}" at ${new Date().toISOString()}`);
         response.send(searchedMovieArray);
     } catch (err) {
         if (err.response) {
@@ -289,6 +293,7 @@ app.get("/trending/tv", async (request, response) => {
             vote_average: tv.vote_average
         }));
 
+        logger.info(`Successfully fetched trending TV shows at ${new Date().toISOString()}`);
         response.send(trendingTVArray);
     } catch (err) {
         if (err.response) {
@@ -327,6 +332,7 @@ app.get("/popular/tv", async (request, response) => {
             vote_average: tv.vote_average
         }));
 
+        logger.info(`Successfully fetched popular TV shows at ${new Date().toISOString()}`);
         response.send(popularTVArray);
     } catch (err) {
         if (err.response) {
@@ -377,6 +383,7 @@ app.get("/search/tv", async (request, response) => {
             vote_average: tv.vote_average
         }));
 
+        logger.info(`Successfully fetched TV shows for query "${query}" at ${new Date().toISOString()}`);
         response.send(searchedTvArray);
     } catch (err) {
         if (err.response) {
@@ -446,6 +453,7 @@ app.get("/trending/anime", async (request, response) => {
             explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
+        logger.info(`Successfully fetched trending animes at ${new Date().toISOString()}`);
         response.send(trendingAnimeArray);
     } catch (err) {
         if (err.response) {
@@ -506,6 +514,7 @@ app.get("/popular/anime", async (request, response) => {
             explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
+        logger.info(`Successfully fetched popular animes at ${new Date().toISOString()}`);
         response.send(popularAnimeArray);
     } catch (err) {
         if (err.response) {
@@ -566,6 +575,7 @@ app.get("/upcoming/anime", async (request, response) => {
             explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
+        logger.info(`Successfully fetched upcoming animes at ${new Date().toISOString()}`);
         response.send(upcomingAnimeArray);
     } catch (err) {
         if (err.response) {
@@ -590,6 +600,8 @@ app.get("/search/anime/:id", async (request, response) => {
     try {
         const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
         const searchAnimeData = searchAnime.data;
+
+        logger.info(`Successfully fetched anime for ID "${animeId}" at ${new Date().toISOString()}`);
         response.send(searchAnimeData);
     } catch (err) {
         if (err.response) {
@@ -618,6 +630,8 @@ app.get("/search/anime", async (request, response) => {
             : `${baseJikanUrl}/anime`;
         const searchAnime = await axios.get(searchAnimeUrl);
         const searchAnimeData = searchAnime.data;
+
+        logger.info(`Successfully fetched anime for query(s) "${queryParams}" at ${new Date().toISOString()}`);
         response.send(searchAnimeData);
     } catch (err) {
         if (err.response) {
