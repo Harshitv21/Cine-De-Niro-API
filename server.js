@@ -290,7 +290,7 @@ app.get("/images/movie/:id", async (request, response) => {
             file_path: imageUrl + backdrop.file_path
         })) || []; // Fallback to an empty array
 
-        const postersArray = fetchedImagesData.posters?.map(poster => ({
+        const postersArray = fetchedImagesData.posters?.slice(0, 5).map(poster => ({
             aspect_ratio: poster.aspect_ratio,
             height: poster.height,
             width: poster.width,
@@ -298,7 +298,6 @@ app.get("/images/movie/:id", async (request, response) => {
         })) || []; // Fallback to an empty array
 
         logger.info(`Successfully fetched images for movie ID: "${movieId}" at ${new Date().toISOString()}`);
-        
         response.send({ backdrops: backdropsArray, posters: postersArray });
     } catch (err) {
         if (err.response) {
