@@ -272,6 +272,48 @@ app.get("/search/movies", async (request, response) => {
     }
 });
 
+/* =============================================================== */
+/*                  Fetch images of a movie by ID                  */
+/* =============================================================== */
+app.get("/images/movie/:id", async (request, response) => {
+    const movieId = request.params.id;
+
+    try {
+        const fetchMovieImagesUrl = `${tmdbUrl}/movie/${movieId}/images`;
+        const fetchedImages = await axios.get(fetchMovieImagesUrl, options);
+        const fetchedImagesData = fetchedImages.data;
+
+        const backdropsArray = fetchedImagesData.backdrops?.map(backdrop => ({
+            aspect_ratio: backdrop.aspect_ratio,
+            height: backdrop.height,
+            width: backdrop.width,
+            file_path: imageUrl + backdrop.file_path
+        })) || []; // Fallback to an empty array
+
+        const postersArray = fetchedImagesData.posters?.map(poster => ({
+            aspect_ratio: poster.aspect_ratio,
+            height: poster.height,
+            width: poster.width,
+            file_path: imageUrl + poster.file_path
+        })) || []; // Fallback to an empty array
+
+        logger.info(`Successfully fetched images for movie ID: "${movieId}" at ${new Date().toISOString()}`);
+        
+        response.send({ backdrops: backdropsArray, posters: postersArray });
+    } catch (err) {
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
+    }
+});
+
 /* =============================================== */
 /*                  Trending TV                    */
 /* =============================================== */
