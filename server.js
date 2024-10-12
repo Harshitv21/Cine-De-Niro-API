@@ -131,8 +131,16 @@ app.get("/trending/movies", async (request, response) => {
 
         response.send(trendingMovieArray);
     } catch (err) {
-        logger.error("Error fetching trending movies:", err);
-        response.status(500).send("Error fetching trending movies.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -160,8 +168,16 @@ app.get("/popular/movies", async (request, response) => {
 
         response.send(popularMovieArray);
     } catch (err) {
-        logger.error("Error fetching popular movies:", err);
-        response.status(500).send("Error fetching popular movies.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -189,8 +205,16 @@ app.get("/upcoming/movies", async (request, response) => {
 
         response.send(upcomingMovieArray);
     } catch (err) {
-        logger.error("Error fetching upcoming movies:", err);
-        response.status(500).send("Error fetching upcoming movies.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -231,8 +255,16 @@ app.get("/search/movies", async (request, response) => {
 
         response.send(searchedMovieArray);
     } catch (err) {
-        logger.error("Error fetching queried movie:", err);
-        response.status(500).send("Error fetching queried movie :(");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -259,8 +291,16 @@ app.get("/trending/tv", async (request, response) => {
 
         response.send(trendingTVArray);
     } catch (err) {
-        logger.error("Error fetching trending tv:", err);
-        response.status(500).send("Error fetching trending tv.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -289,8 +329,16 @@ app.get("/popular/tv", async (request, response) => {
 
         response.send(popularTVArray);
     } catch (err) {
-        logger.error("Error fetching trending tv:", err);
-        response.status(500).send("Error fetching trending tv.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -331,8 +379,16 @@ app.get("/search/tv", async (request, response) => {
 
         response.send(searchedTvArray);
     } catch (err) {
-        logger.error("Error fetching queried TV shows:", err);
-        response.status(500).send("Error fetching queried TV shows :(");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -392,8 +448,16 @@ app.get("/trending/anime", async (request, response) => {
 
         response.send(trendingAnimeArray);
     } catch (err) {
-        logger.error("Error fetching trending anime:", err);
-        response.status(500).send("Error fetching trending anime.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -444,8 +508,16 @@ app.get("/popular/anime", async (request, response) => {
 
         response.send(popularAnimeArray);
     } catch (err) {
-        logger.error("Error fetching popular anime:", err);
-        response.status(500).send("Error fetching popular anime.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -496,8 +568,16 @@ app.get("/upcoming/anime", async (request, response) => {
 
         response.send(upcomingAnimeArray);
     } catch (err) {
-        logger.error("Error fetching popular anime:", err);
-        response.status(500).send("Error fetching popular anime.");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -512,8 +592,16 @@ app.get("/search/anime/:id", async (request, response) => {
         const searchAnimeData = searchAnime.data;
         response.send(searchAnimeData);
     } catch (err) {
-        logger.error("Error fetching queried anime:", err);
-        response.status(500).send("Error fetching queried anime :(");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
@@ -532,8 +620,16 @@ app.get("/search/anime", async (request, response) => {
         const searchAnimeData = searchAnime.data;
         response.send(searchAnimeData);
     } catch (err) {
-        logger.error("Error fetching queried anime:", err);
-        response.status(500).send("Error fetching queried anime :(");
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
     }
 });
 
