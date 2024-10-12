@@ -454,21 +454,15 @@ app.get("/images/tv/:id", async (request, response) => {
         const backdropsArray = fetchedImagesData.backdrops?.slice(0, 30).map(backdrop => ({
             aspect_ratio: backdrop.aspect_ratio,
             height: backdrop.height,
-            iso_639_1: backdrop.iso_639_1,
+            width: backdrop.width,
             file_path: imageUrl + backdrop.file_path,
-            vote_average: backdrop.vote_average,
-            vote_count: backdrop.vote_count,
-            width: backdrop.width
         })) || []; // Fallback to an empty array
 
         const postersArray = fetchedImagesData.posters?.slice(0, 30).map(poster => ({
             aspect_ratio: poster.aspect_ratio,
             height: poster.height,
-            iso_639_1: poster.iso_639_1,
+            width: poster.width,
             file_path: imageUrl + poster.file_path,
-            vote_average: poster.vote_average,
-            vote_count: poster.vote_count,
-            width: poster.width
         })) || []; // Fallback to an empty array
 
         logger.info(`Successfully fetched images for TV show ID: "${tvId}" at ${new Date().toISOString()}`);
