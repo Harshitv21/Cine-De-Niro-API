@@ -4,10 +4,37 @@ import dotenv from 'dotenv';
 import cors from "cors";
 import path from "path";             // Import path module to resolve file paths
 import { fileURLToPath } from 'url'; // Needed to resolve file path with ES modules
+import winston from "winston";
 
 dotenv.config();
 
 const app = express();
+
+/*
+================================================                
+  _                           _               
+ | |                         (_)              
+ | |      ___    __ _   __ _  _  _ __    __ _ 
+ | |     / _ \  / _` | / _` || || '_ \  / _` |
+ | |____| (_) || (_| || (_| || || | | || (_| |
+ |______|\___/  \__, | \__, ||_||_| |_| \__, |
+                 __/ |  __/ |            __/ |
+                |___/  |___/            |___/ 
+================================================              
+*/
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ timestamp, level, message }) => {
+            return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+        })
+    ),
+    transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'logs/error.log', level: 'error' })
+    ]
+});
 
 /*
 ==========================================================================
@@ -28,8 +55,8 @@ app.use((request, response, next) => {
 // CORS middleware
 app.use(cors({
     origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : "*",
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        allowedHeaders: ['Content-Type', 'Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,6 +64,12 @@ const __dirname = path.dirname(__filename);
 
 // Middleware to serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// middleware to log incoming requests
+app.use((request, response, next) => {
+    logger.info(`[${new Date().toISOString()}] ${request.method} ${request.url} - IP: ${request.ip}`);
+    next();
+});
 
 const PORT = process.env.PORT || 3000;
 
@@ -98,7 +131,7 @@ app.get("/trending/movies", async (request, response) => {
 
         response.send(trendingMovieArray);
     } catch (err) {
-        console.error("Error fetching trending movies:", err);
+        logger.error("Error fetching trending movies:", err);
         response.status(500).send("Error fetching trending movies.");
     }
 });
@@ -127,7 +160,7 @@ app.get("/popular/movies", async (request, response) => {
 
         response.send(popularMovieArray);
     } catch (err) {
-        console.error("Error fetching popular movies:", err);
+        logger.error("Error fetching popular movies:", err);
         response.status(500).send("Error fetching popular movies.");
     }
 });
@@ -156,7 +189,7 @@ app.get("/upcoming/movies", async (request, response) => {
 
         response.send(upcomingMovieArray);
     } catch (err) {
-        console.error("Error fetching upcoming movies:", err);
+        logger.error("Error fetching upcoming movies:", err);
         response.status(500).send("Error fetching upcoming movies.");
     }
 });
@@ -198,7 +231,7 @@ app.get("/search/movies", async (request, response) => {
 
         response.send(searchedMovieArray);
     } catch (err) {
-        console.error("Error fetching queried movie:", err);
+        logger.error("Error fetching queried movie:", err);
         response.status(500).send("Error fetching queried movie :(");
     }
 });
@@ -226,7 +259,7 @@ app.get("/trending/tv", async (request, response) => {
 
         response.send(trendingTVArray);
     } catch (err) {
-        console.error("Error fetching trending tv:", err);
+        logger.error("Error fetching trending tv:", err);
         response.status(500).send("Error fetching trending tv.");
     }
 });
@@ -256,7 +289,7 @@ app.get("/popular/tv", async (request, response) => {
 
         response.send(popularTVArray);
     } catch (err) {
-        console.error("Error fetching trending tv:", err);
+        logger.error("Error fetching trending tv:", err);
         response.status(500).send("Error fetching trending tv.");
     }
 });
@@ -298,7 +331,7 @@ app.get("/search/tv", async (request, response) => {
 
         response.send(searchedTvArray);
     } catch (err) {
-        console.error("Error fetching queried TV shows:", err);
+        logger.error("Error fetching queried TV shows:", err);
         response.status(500).send("Error fetching queried TV shows :(");
     }
 });
@@ -359,7 +392,7 @@ app.get("/trending/anime", async (request, response) => {
 
         response.send(trendingAnimeArray);
     } catch (err) {
-        console.error("Error fetching trending anime:", err);
+        logger.error("Error fetching trending anime:", err);
         response.status(500).send("Error fetching trending anime.");
     }
 });
@@ -411,7 +444,7 @@ app.get("/popular/anime", async (request, response) => {
 
         response.send(popularAnimeArray);
     } catch (err) {
-        console.error("Error fetching popular anime:", err);
+        logger.error("Error fetching popular anime:", err);
         response.status(500).send("Error fetching popular anime.");
     }
 });
@@ -463,7 +496,7 @@ app.get("/upcoming/anime", async (request, response) => {
 
         response.send(upcomingAnimeArray);
     } catch (err) {
-        console.error("Error fetching popular anime:", err);
+        logger.error("Error fetching popular anime:", err);
         response.status(500).send("Error fetching popular anime.");
     }
 });
@@ -473,13 +506,13 @@ app.get("/upcoming/anime", async (request, response) => {
 /* ================================================== */
 app.get("/search/anime/:id", async (request, response) => {
     const animeId = request.params.id;
-    
+
     try {
         const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
         const searchAnimeData = searchAnime.data;
         response.send(searchAnimeData);
     } catch (err) {
-        console.error("Error fetching queried anime:", err);
+        logger.error("Error fetching queried anime:", err);
         response.status(500).send("Error fetching queried anime :(");
     }
 });
@@ -499,7 +532,7 @@ app.get("/search/anime", async (request, response) => {
         const searchAnimeData = searchAnime.data;
         response.send(searchAnimeData);
     } catch (err) {
-        console.error("Error fetching queried anime:", err);
+        logger.error("Error fetching queried anime:", err);
         response.status(500).send("Error fetching queried anime :(");
     }
 });
@@ -515,5 +548,5 @@ app.get('*', (request, response) => {
 /*                    LISTEN!                    */
 /* ============================================= */
 app.listen(PORT, () => {
-    console.log(`Listening on port ${PORT}`);
+    logger.info(`Listening on port ${PORT}`);
 });
