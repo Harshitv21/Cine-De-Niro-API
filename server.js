@@ -682,7 +682,28 @@ app.get("/search/anime/:id", async (request, response) => {
 
     try {
         const searchAnime = await axios.get(`${baseJikanUrl}/anime/${animeId}`);
+        const searchImages = await axios.get(`${baseJikanUrl}/anime/${animeId}/pictures`);
+        const searchVideos = await axios.get(`${baseJikanUrl}/anime/${animeId}/videos`);
+
+        const imagesData = searchImages.data.data;
         const searchAnimeData = searchAnime.data;
+        const videosData = searchVideos.data.data;
+
+        const organizedImages = {
+            jpgs: imagesData.map(image => ({
+                image_url: image.jpg.image_url,
+                small_image_url: image.jpg.small_image_url,
+                large_image_url: image.jpg.large_image_url
+            })),
+            webp: imagesData.map(image => ({
+                image_url: image.webp.image_url,
+                small_image_url: image.webp.small_image_url,
+                large_image_url: image.webp.large_image_url
+            }))
+        };        
+
+        searchAnimeData.images_data = organizedImages;
+        searchAnimeData.videos = videosData;
 
         logger.info(`Successfully fetched anime for ID "${animeId}" at ${new Date().toISOString()}`);
         response.send(searchAnimeData);
