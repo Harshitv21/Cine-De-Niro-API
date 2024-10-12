@@ -283,14 +283,14 @@ app.get("/images/movie/:id", async (request, response) => {
         const fetchedImages = await axios.get(fetchMovieImagesUrl, options);
         const fetchedImagesData = fetchedImages.data;
 
-        const backdropsArray = fetchedImagesData.backdrops?.map(backdrop => ({
+        const backdropsArray = fetchedImagesData.backdrops?.slice(0, 30).map(backdrop => ({
             aspect_ratio: backdrop.aspect_ratio,
             height: backdrop.height,
             width: backdrop.width,
             file_path: imageUrl + backdrop.file_path
         })) || []; // Fallback to an empty array
 
-        const postersArray = fetchedImagesData.posters?.slice(0, 5).map(poster => ({
+        const postersArray = fetchedImagesData.posters?.slice(0, 30).map(poster => ({
             aspect_ratio: poster.aspect_ratio,
             height: poster.height,
             width: poster.width,
@@ -426,6 +426,54 @@ app.get("/search/tv", async (request, response) => {
 
         logger.info(`Successfully fetched TV shows for query "${query}" at ${new Date().toISOString()}`);
         response.send(searchedTvArray);
+    } catch (err) {
+        if (err.response) {
+            logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
+            response.status(err.response.status).send("Error fetching data from API.");
+        } else if (err.request) {
+            logger.error('No response received from API:', err.request);
+            response.status(500).send("No response received from API.");
+        } else {
+            logger.error(`Error setting up the request: ${err.message}`);
+            response.status(500).send("Internal Server Error.");
+        }
+    }
+});
+
+/* =============================================================== */
+/*                  Fetch images of a TV show by ID               */
+/* =============================================================== */
+app.get("/images/tv/:id", async (request, response) => {
+    const tvId = request.params.id;
+
+    try {
+        const fetchTvImagesUrl = `${tmdbUrl}/tv/${tvId}/images`;
+        const fetchedImages = await axios.get(fetchTvImagesUrl, options);
+        const fetchedImagesData = fetchedImages.data;
+
+        const backdropsArray = fetchedImagesData.backdrops?.slice(0, 30).map(backdrop => ({
+            aspect_ratio: backdrop.aspect_ratio,
+            height: backdrop.height,
+            iso_639_1: backdrop.iso_639_1,
+            file_path: imageUrl + backdrop.file_path,
+            vote_average: backdrop.vote_average,
+            vote_count: backdrop.vote_count,
+            width: backdrop.width
+        })) || []; // Fallback to an empty array
+
+        const postersArray = fetchedImagesData.posters?.slice(0, 30).map(poster => ({
+            aspect_ratio: poster.aspect_ratio,
+            height: poster.height,
+            iso_639_1: poster.iso_639_1,
+            file_path: imageUrl + poster.file_path,
+            vote_average: poster.vote_average,
+            vote_count: poster.vote_count,
+            width: poster.width
+        })) || []; // Fallback to an empty array
+
+        logger.info(`Successfully fetched images for TV show ID: "${tvId}" at ${new Date().toISOString()}`);
+        
+        response.send({ backdrops: backdropsArray, posters: postersArray });
     } catch (err) {
         if (err.response) {
             logger.error(`API Error: ${err.response.status} - ${err.response.data}`);
