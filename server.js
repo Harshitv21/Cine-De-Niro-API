@@ -161,6 +161,48 @@ app.get("/upcoming/movies", async (request, response) => {
     }
 });
 
+/* ============================================== */
+/*                  Search Movie                  */
+/* ============================================== */
+app.get("/search/movies", async (request, response) => {
+    const { query } = request.query;
+
+    // Fixed parameters for every request
+    const fixedParams = {
+        include_adult: 'false',
+        language: 'en-US',
+        page: 1
+    };
+
+    const queryParams = new URLSearchParams({
+        ...fixedParams,
+        query: query || ''
+    }).toString();
+
+    try {
+        const searchMovieUrl = `${tmdbUrl}/search/movie?${queryParams}`;
+        const searchMovie = await axios.get(searchMovieUrl, options);
+        const searchMovieData = searchMovie.data.results;
+
+        const searchedMovieArray = searchMovieData.slice(0, 20).map(movie => ({
+            id: movie.id,
+            original_language: movie.original_language,
+            original_title: movie.original_title,
+            overview: movie.overview,
+            title: movie.title,
+            backdrop_path: imageUrl + movie.backdrop_path,
+            poster_path: imageUrl + movie.poster_path,
+            release_date: movie.release_date,
+            vote_average: movie.vote_average
+        }));
+
+        response.send(searchedMovieArray);
+    } catch (err) {
+        console.error("Error fetching queried movie:", err);
+        response.status(500).send("Error fetching queried movie :(");
+    }
+});
+
 /* =============================================== */
 /*                  Trending TV                    */
 /* =============================================== */
@@ -216,6 +258,48 @@ app.get("/popular/tv", async (request, response) => {
     } catch (err) {
         console.error("Error fetching trending tv:", err);
         response.status(500).send("Error fetching trending tv.");
+    }
+});
+
+/* =========================================== */
+/*                  Search TV                  */
+/* =========================================== */
+app.get("/search/tv", async (request, response) => {
+    const { query } = request.query;
+
+    // Fixed parameters for every request
+    const fixedParams = {
+        include_adult: 'false',
+        language: 'en-US',
+        page: 1
+    };
+
+    const queryParams = new URLSearchParams({
+        ...fixedParams,
+        query: query || ''
+    }).toString();
+
+    try {
+        const searchTvUrl = `${tmdbUrl}/search/tv?${queryParams}`;
+        const searchTv = await axios.get(searchTvUrl, options);
+        const searchTvData = searchTv.data.results;
+
+        const searchedTvArray = searchTvData.slice(0, 20).map(tv => ({
+            id: tv.id,
+            original_language: tv.original_language,
+            original_name: tv.original_name,
+            overview: tv.overview,
+            name: tv.name,
+            backdrop_path: imageUrl + tv.backdrop_path,
+            poster_path: imageUrl + tv.poster_path,
+            first_air_date: tv.first_air_date,
+            vote_average: tv.vote_average
+        }));
+
+        response.send(searchedTvArray);
+    } catch (err) {
+        console.error("Error fetching queried TV shows:", err);
+        response.status(500).send("Error fetching queried TV shows :(");
     }
 });
 
