@@ -176,27 +176,60 @@ router.get("/upcoming/anime", async (request, response) => {
 router.get("/search/anime/:id", async (request, response) => {
     const animeId = request.params.id;
 
+    // adding a delay
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
     try {
-        const searchAnime = await axios.get(`${URLs.jikan}/anime/${animeId}`);
-        const searchImages = await axios.get(`${URLs.jikan}/anime/${animeId}/pictures`);
-        const searchVideos = await axios.get(`${URLs.jikan}/anime/${animeId}/videos`);
+        const fetchAnime = async () => {
+            await delay(0); // No delay 
+            return axios.get(`${URLs.jikan}/anime/${animeId}`);
+        };
 
-        const imagesData = searchImages.data.data;
-        const searchAnimeData = searchAnime.data;
-        const videosData = searchVideos.data.data;
+        const fetchImages = async () => {
+            await delay(1000); // 1 second delay 
+            return axios.get(`${URLs.jikan}/anime/${animeId}/pictures`);
+        };
 
-        const organizedImages = {
-            jpgs: imagesData.map(image => ({
-                image_url: image.jpg.image_url,
-                small_image_url: image.jpg.small_image_url,
-                large_image_url: image.jpg.large_image_url
-            })),
-            webp: imagesData.map(image => ({
-                image_url: image.webp.image_url,
-                small_image_url: image.webp.small_image_url,
-                large_image_url: image.webp.large_image_url
-            }))
-        };        
+        const fetchVideos = async () => {
+            await delay(2000); // 2 seconds delay 
+            return axios.get(`${URLs.jikan}/anime/${animeId}/videos`);
+        };
+
+        const [animeResult, imagesResult, videosResult] = await Promise.allSettled([
+            fetchAnime(),
+            fetchImages(),
+            fetchVideos()
+        ]);
+
+        // Handling anime data
+        let searchAnimeData = animeResult.status === 'fulfilled' ? animeResult.value.data : { isFetched: false, error: "Can't fetch anime data" };
+
+        // Handling images data
+        let imagesData = imagesResult.status === 'fulfilled'
+            ? imagesResult.value.data.data
+            : { isFetched: false, error: "Can't fetch images" };
+
+        // Organize images only if fetched successfully
+        const organizedImages = imagesResult.status === 'fulfilled'
+            ? {
+                isFetched: true,
+                jpgs: imagesData.map(image => ({
+                    image_url: image.jpg.image_url,
+                    small_image_url: image.jpg.small_image_url,
+                    large_image_url: image.jpg.large_image_url
+                })),
+                webp: imagesData.map(image => ({
+                    image_url: image.webp.image_url,
+                    small_image_url: image.webp.small_image_url,
+                    large_image_url: image.webp.large_image_url
+                }))
+            }
+            : imagesData;
+
+        // Handling videos data
+        let videosData = videosResult.status === 'fulfilled'
+            ? { isFetched: true, data: videosResult.value.data.data }
+            : { isFetched: false, error: "Can't fetch videos" };
 
         searchAnimeData.images_data = organizedImages;
         searchAnimeData.videos = videosData;
