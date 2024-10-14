@@ -424,17 +424,104 @@ router.get("/search/anime/:id", async (request, response) => {
 /*                 Search anime by query                 */
 /* ===================================================== */
 router.get("/search/anime", async (request, response) => {
-    const queryParams = request.query;
-    // constructing the query string
-    const queryString = new URLSearchParams(queryParams).toString();
+    let {
+        page = 1,
+        limit = 25,
+        q,
+        type,
+        score,
+        min_score,
+        max_score,
+        status,
+        rating,
+        sfw,
+        genres,
+        genres_exclude,
+        order_by,
+        sort = "desc",
+        letter,
+        producers,
+        start_date,
+        end_date,
+        unapproved
+    } = request.query;
+
+    // Allowed Enums for validation
+    const allowedTypes = ["tv", "movie", "ova", "special", "ona", "music", "cm", "pv", "tv_special"];
+    const allowedStatuses = ["airing", "complete", "upcoming"];
+    const allowedRatings = ["g", "pg", "pg13", "r17", "r", "rx"];
+    const allowedOrderBy = ["mal_id", "title", "start_date", "end_date", "episodes", "score", "scored_by", "rank", "popularity", "members", "favorites"];
+    const allowedSortDirections = ["desc", "asc"];
+
+    // Validation (only if the query parameters are provided)
+    if (type && !allowedTypes.includes(type)) {
+        return response.status(400).send({ error: `Invalid type value: "${type}". Allowed values are: ${allowedTypes.join(", ")}` });
+    }
+
+    if (status && !allowedStatuses.includes(status)) {
+        return response.status(400).send({ error: `Invalid status value: "${status}". Allowed values are: ${allowedStatuses.join(", ")}` });
+    }
+
+    if (rating && !allowedRatings.includes(rating)) {
+        return response.status(400).send({ error: `Invalid rating value: "${rating}". Allowed values are: ${allowedRatings.join(", ")}` });
+    }
+
+    if (order_by && !allowedOrderBy.includes(order_by)) {
+        return response.status(400).send({ error: `Invalid order_by value: "${order_by}". Allowed values are: ${allowedOrderBy.join(", ")}` });
+    }
+
+    if (sort && !allowedSortDirections.includes(sort)) {
+        return response.status(400).send({ error: `Invalid sort value: "${sort}". Allowed values are: ${allowedSortDirections.join(", ")}` });
+    }
+
+    // Build query string dynamically, including only provided parameters
+    const queryParams = new URLSearchParams();
+
+    queryParams.set('page', page);
+    queryParams.set('limit', limit);
+
+    if (q) queryParams.set('q', q);
+    if (type) queryParams.set('type', type);
+    if (score) queryParams.set('score', score);
+    if (min_score) queryParams.set('min_score', min_score);
+    if (max_score) queryParams.set('max_score', max_score);
+    if (status) queryParams.set('status', status);
+    if (rating) queryParams.set('rating', rating);
+    if (sfw) queryParams.set('sfw', 'true');
+    if (genres) queryParams.set('genres', genres);
+    if (genres_exclude) queryParams.set('genres_exclude', genres_exclude);
+    if (order_by) queryParams.set('order_by', order_by);
+    if (sort) queryParams.set('sort', sort);
+    if (letter) queryParams.set('letter', letter);
+    if (producers) queryParams.set('producers', producers);
+    if (start_date) queryParams.set('start_date', start_date);
+    if (end_date) queryParams.set('end_date', end_date);
+    if (unapproved) queryParams.set('unapproved', 'true');
+
     try {
-        const searchAnimeUrl = queryString
-            ? `${URLs.jikan}/anime?${queryString}`
-            : `${URLs.jikan}/anime`;
+        const searchAnimeUrl = `${URLs.jikan}/anime?${queryParams.toString()}`;
         const searchAnime = await axios.get(searchAnimeUrl);
         const searchAnimeData = searchAnime.data;
 
-        logger.info(`Successfully fetched anime for query(s) "${queryParams}" at ${new Date().toISOString()}`);
+        // Check if the requested page exceeds the last visible page
+        if (page > searchAnimeData.pagination.last_visible_page) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: searchAnimeData.pagination.last_visible_page,
+                    has_next_page: false,
+                    items: {
+                        count: 0,
+                        total: 0,
+                        per_page: limit
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        logger.info(`Fetched searched anime, at ${new Date().toISOString()}`);
         response.send(searchAnimeData);
     } catch (err) {
         handleError(err, response);
