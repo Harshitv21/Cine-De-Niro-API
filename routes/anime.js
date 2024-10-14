@@ -117,7 +117,7 @@ router.get("/trending/anime", async (request, response) => {
             results: trendingAnimeArray
         };
 
-        logger.info(`Successfully fetched trending animes at ${new Date().toISOString()}`);
+        logger.info(`Fetched trending anime with query params: page=${page}, limit=${limit}, filter=${filter}, at ${new Date().toISOString()}`);
         response.send(responseData);
     } catch (err) {
         handleError(err, response);
@@ -128,12 +128,59 @@ router.get("/trending/anime", async (request, response) => {
 /*                  Popular anime                  */
 /* =============================================== */
 router.get("/popular/anime", async (request, response) => {
-    try {
-        const popularAnimeUrl = `${URLs.jikan}/top/anime`;
-        const popular = await axios.get(popularAnimeUrl);
-        const popularAnimeData = popular.data.data;
+    let { page = 1, limit = 25, type, filter, rating, sfw } = request.query;
 
-        const popularAnimeArray = popularAnimeData.slice(0, 20).map(anime => ({
+    // Define allowed filter values & validate
+    const allowedFilters = ["airing", "upcoming", "bypopularity", "favorite"];
+    const allowedTypes = ["tv", "movie", "ova", "special", "ona", "music", "cm", "pv", "tv_special"];
+
+    if (filter && !allowedFilters.includes(filter)) {
+        return response.status(400).send({ error: `Invalid filter value: "${filter}". Allowed values are: ${allowedFilters.join(", ")}` });
+    }
+
+    if (type && !allowedTypes.includes(type)) {
+        return response.status(400).send({ error: `Invalid type value: "${type}". Allowed values are: ${allowedTypes.join(", ")}` });
+    }
+
+    try {
+        let popularAnimeUrl = `${URLs.jikan}/top/anime?page=${page}&limit=${limit}`;
+
+        // add filters if provided
+        if (type) {
+            popularAnimeUrl += `&type=${type}`;
+        }
+        if (filter) {
+            popularAnimeUrl += `&filter=${filter}`;
+        }
+        if (rating) {
+            popularAnimeUrl += `&rating=${rating}`;
+        }
+        if (sfw) {
+            popularAnimeUrl += `&sfw`;
+        }
+
+        const popular = await axios.get(popularAnimeUrl);
+        const popularAnimeData = popular.data;
+
+        // Check if the requested page exceeds the last visible page
+        if (page > popularAnimeData.pagination.last_visible_page) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: popularAnimeData.pagination.last_visible_page,
+                    has_next_page: false,
+                    items: {
+                        count: 0,
+                        total: 0,
+                        per_page: limit
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        const popularAnimeArray = popularAnimeData.data.slice(0, limit).map(anime => ({
             mal_id: anime.mal_id,
             mal_url: anime.url,
             images: [
@@ -169,8 +216,24 @@ router.get("/popular/anime", async (request, response) => {
             explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
-        logger.info(`Successfully fetched popular animes at ${new Date().toISOString()}`);
-        response.send(popularAnimeArray);
+        const paginationInfo = {
+            current_page: page,
+            last_visible_page: popularAnimeData.pagination.last_visible_page,
+            has_next_page: popularAnimeData.pagination.has_next_page,
+            items: {
+                count: popularAnimeData.pagination.items.count,
+                total: popularAnimeData.pagination.items.total,
+                per_page: limit
+            }
+        };
+
+        const responseData = {
+            pagination: paginationInfo,
+            results: popularAnimeArray
+        };
+
+        logger.info(`Fetched popular anime with query params: page=${page}, limit=${limit}, filter=${filter}, at ${new Date().toISOString()}`);
+        response.send(responseData);
     } catch (err) {
         handleError(err, response);
     }
