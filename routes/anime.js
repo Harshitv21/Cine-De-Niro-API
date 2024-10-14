@@ -243,12 +243,54 @@ router.get("/popular/anime", async (request, response) => {
 /*                  Upcoming anime                 */
 /* =============================================== */
 router.get("/upcoming/anime", async (request, response) => {
-    try {
-        const upcomingAnimeUrl = `${URLs.jikan}/seasons/upcoming`;
-        const upcoming = await axios.get(upcomingAnimeUrl);
-        const upcomingAnimeData = upcoming.data.data;
+    let { page = 1, limit = 25, filter, sfw, unapproved, continuing } = request.query;
 
-        const upcomingAnimeArray = upcomingAnimeData.slice(0, 20).map(anime => ({
+    // Define allowed filter values & validate
+    const allowedFilters = ["tv", "movie", "ova", "special", "ona", "music"];
+
+    if (filter && !allowedFilters.includes(filter)) {
+        return response.status(400).send({ error: `Invalid filter value: "${filter}". Allowed values are: ${allowedFilters.join(", ")}` });
+    }
+
+    try {
+        const upcomingAnimeUrl = `${URLs.jikan}/seasons/upcoming?page=${page}&limit=${limit}`;
+
+        // Add filters if provided
+        if (filter) {
+            upcomingAnimeUrl += `&filter=${filter}`;
+        }
+        if (sfw) {
+            upcomingAnimeUrl += `&sfw`;
+        }
+        if (unapproved) {
+            upcomingAnimeUrl += `&unapproved`;
+        }
+        if (continuing) {
+            upcomingAnimeUrl += `&continuing`;
+        }
+
+        const upcoming = await axios.get(upcomingAnimeUrl);
+        const upcomingAnimeData = upcoming.data;
+
+        // Check if the requested page exceeds the last visible page
+        if (page > upcomingAnimeData.pagination.last_visible_page) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: upcomingAnimeData.pagination.last_visible_page,
+                    has_next_page: false,
+                    items: {
+                        count: 0,
+                        total: 0,
+                        per_page: limit
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        const upcomingAnimeArray = upcomingAnimeData.data.slice(0, limit).map(anime => ({
             mal_id: anime.mal_id,
             mal_url: anime.url,
             images: [
@@ -284,8 +326,24 @@ router.get("/upcoming/anime", async (request, response) => {
             explicit_genres: anime.explicit_genres.map(genre => genre.name)
         }));
 
-        logger.info(`Successfully fetched upcoming animes at ${new Date().toISOString()}`);
-        response.send(upcomingAnimeArray);
+        const paginationInfo = {
+            current_page: page,
+            last_visible_page: upcomingAnimeData.pagination.last_visible_page,
+            has_next_page: upcomingAnimeData.pagination.has_next_page,
+            items: {
+                count: upcomingAnimeData.pagination.items.count,
+                total: upcomingAnimeData.pagination.items.total,
+                per_page: limit
+            }
+        };
+
+        const responseData = {
+            pagination: paginationInfo,
+            results: upcomingAnimeArray
+        };
+
+        logger.info(`Fetched upcoming anime with query params: page=${page}, limit=${limit}, filter=${filter}, at ${new Date().toISOString()}`);
+        response.send(responseData);
     } catch (err) {
         handleError(err, response);
     }
