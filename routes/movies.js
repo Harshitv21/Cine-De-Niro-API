@@ -17,26 +17,32 @@ const router = express.Router();
 /* =============================================== */
 /*                  Trending movies                */
 /* =============================================== */
-router.get("/trending/movies", async (request, response) => {
+router.get("/trending/movies/:time_window?", async (request, response) => {
+    const time_window = request.params.time_window || 'week';
+
+    // Validate that the time_window is either 'week' or 'day'
+    const allowedValues = ['week', 'day'];
+
+    if (!allowedValues.includes(time_window)) {
+        return response.status(400).send({
+            error: `Invalid time_window value: "${time_window}". Allowed values are: ${allowedValues.join(", ")}`
+        });
+    }
+
     try {
-        const url = `${URLs.tmdb}/trending/movie/week?language=en-US`;
+        const url = `${URLs.tmdb}/trending/movie/${time_window}?language=en-US`;
 
         const trending = await axios.get(url, options);
         const trendingData = trending.data.results;
 
-        const trendingMovieArray = trendingData.slice(0, 20).map(movie => ({
-            id: movie.id,
-            title: movie.title,
-            original_title: movie.original_title,
-            overview: movie.overview,
-            backdrop_path: URLs.image + movie.backdrop_path,
-            poster_path: URLs.image + movie.poster_path,
-            release_date: movie.release_date,
-            vote_average: movie.vote_average
+        const modifiedTrendingData = trendingData.map(movie => ({
+            ...movie,
+            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
+            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
         }));
 
         logger.info(`Successfully fetched trending movies at ${new Date().toISOString()}`);
-        response.send(trendingMovieArray);
+        response.send(modifiedTrendingData);
     } catch (err) {
         handleError(err, response);
     }
