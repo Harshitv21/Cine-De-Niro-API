@@ -100,39 +100,65 @@ router.get("/popular/tv", async (request, response) => {
 /*                  Search TV                  */
 /* =========================================== */
 router.get("/search/tv", async (request, response) => {
-    const { query } = request.query;
+    const { page, query, first_air_date_year, region, year, include_adult } = request.query;
 
     // Fixed parameters for every request
     const fixedParams = {
-        include_adult: 'false',
         language: 'en-US',
-        page: 1
     };
 
     const queryParams = new URLSearchParams({
         ...fixedParams,
-        query: query || ''
+        query: query || '',
+        first_air_date_year: first_air_date_year ?? '',
+        region: region ?? '',
+        year: year ?? '',
+        page: page ?? 1,
+        include_adult: include_adult ?? false
     }).toString();
+
+    if (!query) {
+        return response.status(400).send({
+            error: "No query provided! ☹️"
+        });
+    }
 
     try {
         const searchTvUrl = `${URLs.tmdb}/search/tv?${queryParams}`;
         const searchTv = await axios.get(searchTvUrl, options);
-        const searchTvData = searchTv.data.results;
+        const searchTvData = searchTv.data;
 
-        const searchedTvArray = searchTvData.slice(0, 20).map(tv => ({
-            id: tv.id,
-            original_language: tv.original_language,
-            original_name: tv.original_name,
-            overview: tv.overview,
-            name: tv.name,
-            backdrop_path: URLs.image + tv.backdrop_path,
-            poster_path: URLs.image + tv.poster_path,
-            first_air_date: tv.first_air_date,
-            vote_average: tv.vote_average
+        // Check if the requested page exists
+        if (page > searchTvData.total_pages) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: searchTvData.total_pages,
+                    has_next_page: false,
+                    items: {
+                        total_pages: searchTvData.total_pages,
+                        total_results: searchTvData.total_results,
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        const formattedTVShows = searchTvData.results.map(tv => ({
+            ...tv,
+            backdrop_path: tv.backdrop_path ? URLs.image + tv.backdrop_path : null,
+            poster_path: tv.poster_path ? URLs.image + tv.poster_path : null
         }));
 
+        const pageInfo = {
+            current_page: searchTvData.page,
+            total_pages: searchTvData.total_pages,
+            total_results: searchTvData.total_results
+        }
+
         logger.info(`Successfully fetched TV shows for query "${query}" at ${new Date().toISOString()}`);
-        response.send(searchedTvArray);
+        response.send({ pagination: pageInfo, search_result: formattedTVShows });
     } catch (err) {
         handleError(err, response);
     }
@@ -164,7 +190,7 @@ router.get("/images/tv/:id", async (request, response) => {
         })) || []; // Fallback to an empty array
 
         logger.info(`Successfully fetched images for TV show ID: "${tvId}" at ${new Date().toISOString()}`);
-        
+
         response.send({ backdrops: backdropsArray, posters: postersArray });
     } catch (err) {
         handleError(err, response);
