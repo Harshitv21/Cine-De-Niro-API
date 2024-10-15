@@ -90,7 +90,7 @@ router.get("/popular/movies", async (request, response) => {
         }
 
         logger.info(`Successfully fetched popular movies at ${new Date().toISOString()}`);
-        response.send({ page_info: pageInfo, popular_movies: modifiedPopularData });
+        response.send({ pagination: pageInfo, popular_movies: modifiedPopularData });
     } catch (err) {
         handleError(err, response);
     }
@@ -138,7 +138,7 @@ router.get("/upcoming/movies", async (request, response) => {
         }
 
         logger.info(`Successfully fetched upcoming movies at ${new Date().toISOString()}`);
-        response.send({ page_info: pageInfo, popular_movies: modifiedUpcomingData });
+        response.send({ pagination: pageInfo, popular_movies: modifiedUpcomingData });
     } catch (err) {
         handleError(err, response);
     }
@@ -206,7 +206,7 @@ router.get("/search/movies", async (request, response) => {
         }
 
         logger.info(`Successfully fetched movies for query "${query}" at ${new Date().toISOString()}`);
-        response.send({ page_info: pageInfo, search_result: formattedMovies });
+        response.send({ pagination: pageInfo, search_result: formattedMovies });
     } catch (err) {
         handleError(err, response);
     }
