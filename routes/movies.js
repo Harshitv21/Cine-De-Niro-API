@@ -52,26 +52,45 @@ router.get("/trending/movies/:time_window?", async (request, response) => {
 /*                  Popular movies                 */
 /* =============================================== */
 router.get("/popular/movies", async (request, response) => {
+    const { page = 1 } = request.query;
+
     try {
-        const url = `${URLs.tmdb}/movie/popular?language=en-US&page=1`;
+        const url = `${URLs.tmdb}/movie/popular?language=en-US&page=${page}`;
 
         const popular = await axios.get(url, options);
-        const popularData = popular.data.results;
+        const popularData = popular.data;
 
-        const popularMovieArray = popularData.slice(0, 20).map(movie => ({
-            id: movie.id,
-            original_language: movie.original_language,
-            original_title: movie.original_title,
-            title: movie.title,
-            overview: movie.overview,
-            backdrop_path: URLs.image + movie.backdrop_path,
-            poster_path: URLs.image + movie.poster_path,
-            release_date: movie.release_date,
-            vote_average: movie.vote_average
+        // Check if the requested page exists
+        if (page > popularData.total_pages) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: popularData.total_pages,
+                    has_next_page: false,
+                    items: {
+                        total_pages: popularData.total_pages,
+                        total_results: popularData.total_results,
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        const modifiedPopularData = popularData.results.map(movie => ({
+            ...movie,
+            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
+            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
         }));
 
+        const pageInfo = {
+            current_page: popular.data.page,
+            total_pages: popularData.total_pages,
+            total_results: popularData.total_results
+        }
+
         logger.info(`Successfully fetched popular movies at ${new Date().toISOString()}`);
-        response.send(popularMovieArray);
+        response.send({ page_info: pageInfo, popular_movies: modifiedPopularData });
     } catch (err) {
         handleError(err, response);
     }
