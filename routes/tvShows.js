@@ -52,27 +52,45 @@ router.get("/trending/tv/:time_window?", async (request, response) => {
 /*                  Popular TV                     */
 /* =============================================== */
 router.get("/popular/tv", async (request, response) => {
+    const { page = 1 } = request.query;
+
     try {
-        const url = `${URLs.tmdb}/tv/top_rated?language=en-US&page=1`;
+        const url = `${URLs.tmdb}/tv/top_rated?language=en-US&page=${page}`;
 
         const popular = await axios.get(url, options);
-        const popularData = popular.data.results;
+        const popularData = popular.data;
 
-        const popularTVArray = popularData.slice(0, 20).map(tv => ({
-            id: tv.id,
-            title: tv.name,
-            original_language: tv.original_language,
-            name: tv.name,
-            original_name: tv.original_name,
-            overview: tv.overview,
-            backdrop_path: URLs.image + tv.backdrop_path,
-            poster_path: URLs.image + tv.poster_path,
-            release_date: tv.first_air_date,
-            vote_average: tv.vote_average
+        // Check if the requested page exists
+        if (page > popularData.total_pages) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: popularData.total_pages,
+                    has_next_page: false,
+                    items: {
+                        total_pages: popularData.total_pages,
+                        total_results: popularData.total_results,
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        const modifiedPopularData = popularData.results.map(tv => ({
+            ...tv,
+            backdrop_path: tv.backdrop_path ? URLs.image + tv.backdrop_path : null,
+            poster_path: tv.poster_path ? URLs.image + tv.poster_path : null
         }));
 
+        const pageInfo = {
+            current_page: popularData.page,
+            total_pages: popularData.total_pages,
+            total_results: popularData.total_results
+        }
+
         logger.info(`Successfully fetched popular TV shows at ${new Date().toISOString()}`);
-        response.send(popularTVArray);
+        response.send({ pagination: pageInfo, popular_tv_shows: modifiedPopularData });
     } catch (err) {
         handleError(err, response);
     }
