@@ -148,39 +148,65 @@ router.get("/upcoming/movies", async (request, response) => {
 /*                  Search Movie                  */
 /* ============================================== */
 router.get("/search/movies", async (request, response) => {
-    const { query } = request.query;
+    const { page, query, primary_release_year, region, year, include_adult } = request.query;
 
     // Fixed parameters for every request
     const fixedParams = {
-        include_adult: 'false',
         language: 'en-US',
-        page: 1
     };
 
     const queryParams = new URLSearchParams({
         ...fixedParams,
-        query: query || ''
+        query: query || '',
+        primary_release_year: primary_release_year ?? '',
+        region: region ?? '',
+        year: year ?? '',
+        page: page ?? 1,
+        include_adult: include_adult ?? false
     }).toString();
+
+    if (!query) {
+        return response.status(400).send({
+            error: "No query provided! ☹️"
+        });
+    }
 
     try {
         const searchMovieUrl = `${URLs.tmdb}/search/movie?${queryParams}`;
         const searchMovie = await axios.get(searchMovieUrl, options);
-        const searchMovieData = searchMovie.data.results;
+        const searchMovieData = searchMovie.data;
 
-        const searchedMovieArray = searchMovieData.slice(0, 20).map(movie => ({
-            id: movie.id,
-            original_language: movie.original_language,
-            original_title: movie.original_title,
-            overview: movie.overview,
-            title: movie.title,
-            backdrop_path: URLs.image + movie.backdrop_path,
-            poster_path: URLs.image + movie.poster_path,
-            release_date: movie.release_date,
-            vote_average: movie.vote_average
+        // Check if the requested page exists
+        if (page > searchMovieData.total_pages) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: searchMovieData.total_pages,
+                    has_next_page: false,
+                    items: {
+                        total_pages: searchMovieData.total_pages,
+                        total_results: searchMovieData.total_results,
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        const formattedMovies = searchMovieData.results.map(movie => ({
+            ...movie,
+            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
+            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
         }));
 
+        const pageInfo = {
+            current_page: searchMovieData.page,
+            total_pages: searchMovieData.total_pages,
+            total_results: searchMovieData.total_results
+        }
+
         logger.info(`Successfully fetched movies for query "${query}" at ${new Date().toISOString()}`);
-        response.send(searchedMovieArray);
+        response.send({ page_info: pageInfo, search_result: formattedMovies });
     } catch (err) {
         handleError(err, response);
     }
