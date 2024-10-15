@@ -84,7 +84,7 @@ router.get("/popular/movies", async (request, response) => {
         }));
 
         const pageInfo = {
-            current_page: popular.data.page,
+            current_page: popularData.page,
             total_pages: popularData.total_pages,
             total_results: popularData.total_results
         }
@@ -100,26 +100,45 @@ router.get("/popular/movies", async (request, response) => {
 /*                  Upcoming movies                */
 /* =============================================== */
 router.get("/upcoming/movies", async (request, response) => {
+    const { page = 1 } = request.query;
+
     try {
-        const url = `${URLs.tmdb}/movie/upcoming?language=en-US&page=1`;
+        const url = `${URLs.tmdb}/movie/upcoming?language=en-US&page=${page}`;
 
         const upcoming = await axios.get(url, options);
-        const upcomingData = upcoming.data.results;
+        const upcomingData = upcoming.data;
 
-        const upcomingMovieArray = upcomingData.slice(0, 20).map(movie => ({
-            id: movie.id,
-            original_language: movie.original_language,
-            original_title: movie.original_title,
-            overview: movie.overview,
-            title: movie.title,
-            backdrop_path: URLs.image + movie.backdrop_path,
-            poster_path: URLs.image + movie.poster_path,
-            release_date: movie.release_date,
-            vote_average: movie.vote_average
+        // Check if the requested page exists
+        if (page > upcomingData.total_pages) {
+            return response.status(404).json({
+                pagination: {
+                    current_page: page,
+                    last_visible_page: upcomingData.total_pages,
+                    has_next_page: false,
+                    items: {
+                        total_pages: upcomingData.total_pages,
+                        total_results: upcomingData.total_results,
+                    }
+                },
+                results: [],
+                message: "No results found for the requested page."
+            });
+        }
+
+        const modifiedUpcomingData = upcomingData.results.map(movie => ({
+            ...movie,
+            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
+            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
         }));
 
+        const pageInfo = {
+            current_page: upcomingData.page,
+            total_pages: upcomingData.total_pages,
+            total_results: upcomingData.total_results
+        }
+
         logger.info(`Successfully fetched upcoming movies at ${new Date().toISOString()}`);
-        response.send(upcomingMovieArray);
+        response.send({ page_info: pageInfo, popular_movies: modifiedUpcomingData });
     } catch (err) {
         handleError(err, response);
     }
