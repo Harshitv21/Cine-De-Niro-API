@@ -218,19 +218,23 @@ router.get("/search/movies", async (request, response) => {
 router.get("/images/movie/:id", async (request, response) => {
     const movieId = request.params.id;
 
+    const queryParams = new URLSearchParams({
+        include_image_language: "en"
+    }).toString();
+
     try {
-        const fetchMovieImagesUrl = `${URLs.tmdb}/movie/${movieId}/images`;
+        const fetchMovieImagesUrl = `${URLs.tmdb}/movie/${movieId}/images?${queryParams}`;
         const fetchedImages = await axios.get(fetchMovieImagesUrl, options);
         const fetchedImagesData = fetchedImages.data;
 
-        const backdropsArray = fetchedImagesData.backdrops?.slice(0, 30).map(backdrop => ({
+        const backdropsArray = fetchedImagesData.backdrops?.map(backdrop => ({
             aspect_ratio: backdrop.aspect_ratio,
             height: backdrop.height,
             width: backdrop.width,
             file_path: URLs.image + backdrop.file_path
         })) || []; // Fallback to an empty array
 
-        const postersArray = fetchedImagesData.posters?.slice(0, 30).map(poster => ({
+        const postersArray = fetchedImagesData.posters?.map(poster => ({
             aspect_ratio: poster.aspect_ratio,
             height: poster.height,
             width: poster.width,
