@@ -165,24 +165,28 @@ router.get("/search/tv", async (request, response) => {
 });
 
 /* =============================================================== */
-/*                  Fetch images of a TV show by ID               */
+/*                  Fetch images of a TV show by ID                */
 /* =============================================================== */
 router.get("/images/tv/:id", async (request, response) => {
     const tvId = request.params.id;
 
+    const queryParams = new URLSearchParams({
+        include_image_language: "en"
+    }).toString();
+
     try {
-        const fetchTvImagesUrl = `${URLs.tmdb}/tv/${tvId}/images`;
+        const fetchTvImagesUrl = `${URLs.tmdb}/tv/${tvId}/images?${queryParams}`;
         const fetchedImages = await axios.get(fetchTvImagesUrl, options);
         const fetchedImagesData = fetchedImages.data;
 
-        const backdropsArray = fetchedImagesData.backdrops?.slice(0, 30).map(backdrop => ({
+        const backdropsArray = fetchedImagesData.backdrops?.map(backdrop => ({
             aspect_ratio: backdrop.aspect_ratio,
             height: backdrop.height,
             width: backdrop.width,
             file_path: URLs.image + backdrop.file_path,
         })) || []; // Fallback to an empty array
 
-        const postersArray = fetchedImagesData.posters?.slice(0, 30).map(poster => ({
+        const postersArray = fetchedImagesData.posters?.map(poster => ({
             aspect_ratio: poster.aspect_ratio,
             height: poster.height,
             width: poster.width,
@@ -190,7 +194,6 @@ router.get("/images/tv/:id", async (request, response) => {
         })) || []; // Fallback to an empty array
 
         logger.info(`Successfully fetched images for TV show ID: "${tvId}" at ${new Date().toISOString()}`);
-
         response.send({ backdrops: backdropsArray, posters: postersArray });
     } catch (err) {
         handleError(err, response);
