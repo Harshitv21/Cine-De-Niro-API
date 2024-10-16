@@ -11,6 +11,7 @@ import express from 'express';
 import axios from 'axios';
 import logger from '../utils/logger.js';
 import { URLs } from '../config/constants.js';
+import redisClient from '../caching/redisClient.js';
 
 const router = express.Router();
 
@@ -27,21 +28,28 @@ router.get("/trending/anime", async (request, response) => {
         return response.status(400).send({ error: `Invalid filter value: "${filter}". Allowed values are: ${allowedFilters.join(", ")}` });
     }
 
+    // Generate Redis key dynamically based on existing query parameters
+    const redisKeyParts = [`trending_anime_${page}_${limit}`];
+    if (filter) redisKeyParts.push(`filter_${filter}`);
+    if (sfw) redisKeyParts.push(`sfw`);
+    if (unapproved) redisKeyParts.push(`unapproved`);
+    if (continuing) redisKeyParts.push(`continuing`);
+
+    const redisKey = redisKeyParts.join('_');
+
     try {
         let trendingAnimeUrl = `${URLs.jikan}/seasons/now?page=${page}&limit=${limit}`;
 
         // Add filters if provided
-        if (filter) {
-            trendingAnimeUrl += `&filter=${filter}`;
-        }
-        if (sfw) {
-            trendingAnimeUrl += `&sfw`;
-        }
-        if (unapproved) {
-            trendingAnimeUrl += `&unapproved`;
-        }
-        if (continuing) {
-            trendingAnimeUrl += `&continuing`;
+        if (filter) trendingAnimeUrl += `&filter=${filter}`;
+        if (sfw) trendingAnimeUrl += `&sfw`;
+        if (unapproved) trendingAnimeUrl += `&unapproved`;
+        if (continuing) trendingAnimeUrl += `&continuing`;
+
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving trending anime data from cache 🧑‍🍳🍽️🍕");
+            return response.send(JSON.parse(cachedData));
         }
 
         const trending = await axios.get(trendingAnimeUrl);
@@ -69,8 +77,8 @@ router.get("/trending/anime", async (request, response) => {
             mal_id: anime.mal_id,
             mal_url: anime.url,
             images: [
-                anime.images.jpg.image_url,
-                anime.images.jpg.large_image_url,
+                anime.images?.jpg?.image_url || null,
+                anime.images?.jpg?.large_image_url || null,
                 anime.trailer.images?.maximum_image_url || null
             ],
             trailer: {
@@ -117,6 +125,8 @@ router.get("/trending/anime", async (request, response) => {
             results: trendingAnimeArray
         };
 
+        await redisClient.set(redisKey, JSON.stringify(responseData), 'EX', 3600);
+
         logger.info(`Fetched trending anime with query params: page=${page}, limit=${limit}, filter=${filter}, at ${new Date().toISOString()}`);
         response.send(responseData);
     } catch (err) {
@@ -142,21 +152,27 @@ router.get("/popular/anime", async (request, response) => {
         return response.status(400).send({ error: `Invalid type value: "${type}". Allowed values are: ${allowedTypes.join(", ")}` });
     }
 
+    // Generate Redis key dynamically based on existing query parameters
+    const redisKeyParts = [`popular_anime_${page}_${limit}`];
+    if (type) redisKeyParts.push(`type_${type}`);
+    if (filter) redisKeyParts.push(`filter_${filter}`);
+    if (sfw) redisKeyParts.push(`sfw`);
+
+    const redisKey = redisKeyParts.join('_');
+
     try {
         let popularAnimeUrl = `${URLs.jikan}/top/anime?page=${page}&limit=${limit}`;
 
         // add filters if provided
-        if (type) {
-            popularAnimeUrl += `&type=${type}`;
-        }
-        if (filter) {
-            popularAnimeUrl += `&filter=${filter}`;
-        }
-        if (rating) {
-            popularAnimeUrl += `&rating=${rating}`;
-        }
-        if (sfw) {
-            popularAnimeUrl += `&sfw`;
+        if (type) popularAnimeUrl += `&type=${type}`;
+        if (filter) popularAnimeUrl += `&filter=${filter}`;
+        if (rating) popularAnimeUrl += `&rating=${rating}`;
+        if (sfw) popularAnimeUrl += `&sfw`;
+
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving popular anime data from cache 🧑‍🍳🍽️🍕");
+            return response.send(JSON.parse(cachedData));
         }
 
         const popular = await axios.get(popularAnimeUrl);
@@ -232,6 +248,8 @@ router.get("/popular/anime", async (request, response) => {
             results: popularAnimeArray
         };
 
+        await redisClient.set(redisKey, JSON.stringify(responseData), 'EX', 3600);
+
         logger.info(`Fetched popular anime with query params: page=${page}, limit=${limit}, filter=${filter}, at ${new Date().toISOString()}`);
         response.send(responseData);
     } catch (err) {
@@ -252,21 +270,28 @@ router.get("/upcoming/anime", async (request, response) => {
         return response.status(400).send({ error: `Invalid filter value: "${filter}". Allowed values are: ${allowedFilters.join(", ")}` });
     }
 
+    // Generate Redis key dynamically based on existing query parameters
+    const redisKeyParts = [`upcoming_anime_${page}_${limit}`];
+    if (filter) redisKeyParts.push(`filter_${filter}`);
+    if (sfw) redisKeyParts.push(`sfw`);
+    if (unapproved) redisKeyParts.push(`unapproved`);
+    if (continuing) redisKeyParts.push(`continuing`);
+
+    const redisKey = redisKeyParts.join('_');
+
     try {
         const upcomingAnimeUrl = `${URLs.jikan}/seasons/upcoming?page=${page}&limit=${limit}`;
 
         // Add filters if provided
-        if (filter) {
-            upcomingAnimeUrl += `&filter=${filter}`;
-        }
-        if (sfw) {
-            upcomingAnimeUrl += `&sfw`;
-        }
-        if (unapproved) {
-            upcomingAnimeUrl += `&unapproved`;
-        }
-        if (continuing) {
-            upcomingAnimeUrl += `&continuing`;
+        if (filter) upcomingAnimeUrl += `&filter=${filter}`;
+        if (sfw) upcomingAnimeUrl += `&sfw`;
+        if (unapproved) upcomingAnimeUrl += `&unapproved`;
+        if (continuing) upcomingAnimeUrl += `&continuing`;
+
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving upcoming anime data from cache 🧑‍🍳🍽️🍕");
+            return response.send(JSON.parse(cachedData));
         }
 
         const upcoming = await axios.get(upcomingAnimeUrl);
@@ -342,6 +367,8 @@ router.get("/upcoming/anime", async (request, response) => {
             results: upcomingAnimeArray
         };
 
+        await redisClient.set(redisKey, JSON.stringify(responseData), 'EX', 3600);
+
         logger.info(`Fetched upcoming anime with query params: page=${page}, limit=${limit}, filter=${filter}, at ${new Date().toISOString()}`);
         response.send(responseData);
     } catch (err) {
@@ -355,10 +382,18 @@ router.get("/upcoming/anime", async (request, response) => {
 router.get("/search/anime/:id", async (request, response) => {
     const animeId = request.params.id;
 
+    const redisKey = `search_anime_${animeId}`;
+
     // adding a delay
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
     try {
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info(`Serving anime with id->${animeId} data from cache 🧑‍🍳🍽️🍕`);
+            return response.send(JSON.parse(cachedData));
+        }
+
         const fetchAnime = async () => {
             await delay(0); // No delay 
             return axios.get(`${URLs.jikan}/anime/${animeId}`);
@@ -412,6 +447,8 @@ router.get("/search/anime/:id", async (request, response) => {
 
         searchAnimeData.images_data = organizedImages;
         searchAnimeData.videos = videosData;
+
+        await redisClient.set(redisKey, JSON.stringify(searchAnimeData), 'EX', 3600);
 
         logger.info(`Successfully fetched anime for ID "${animeId}" at ${new Date().toISOString()}`);
         response.send(searchAnimeData);
@@ -476,10 +513,8 @@ router.get("/search/anime", async (request, response) => {
 
     // Build query string dynamically, including only provided parameters
     const queryParams = new URLSearchParams();
-
     queryParams.set('page', page);
     queryParams.set('limit', limit);
-
     if (q) queryParams.set('q', q);
     if (type) queryParams.set('type', type);
     if (score) queryParams.set('score', score);
@@ -498,7 +533,35 @@ router.get("/search/anime", async (request, response) => {
     if (end_date) queryParams.set('end_date', end_date);
     if (unapproved) queryParams.set('unapproved', 'true');
 
+    // Generate Redis cache key dynamically based on provided parameters
+    const redisKeyParts = [`search_anime_${page}_${limit}`];
+    if (q) redisKeyParts.push(`q_${q}`);
+    if (type) redisKeyParts.push(`type_${type}`);
+    if (score) redisKeyParts.push(`score_${score}`);
+    if (min_score) redisKeyParts.push(`min_score_${min_score}`);
+    if (max_score) redisKeyParts.push(`max_score_${max_score}`);
+    if (status) redisKeyParts.push(`status_${status}`);
+    if (rating) redisKeyParts.push(`rating_${rating}`);
+    if (sfw) redisKeyParts.push('sfw');
+    if (genres) redisKeyParts.push(`genres_${genres}`);
+    if (genres_exclude) redisKeyParts.push(`genres_exclude_${genres_exclude}`);
+    if (order_by) redisKeyParts.push(`order_by_${order_by}`);
+    if (sort) redisKeyParts.push(`sort_${sort}`);
+    if (letter) redisKeyParts.push(`letter_${letter}`);
+    if (producers) redisKeyParts.push(`producers_${producers}`);
+    if (start_date) redisKeyParts.push(`start_date_${start_date}`);
+    if (end_date) redisKeyParts.push(`end_date_${end_date}`);
+    if (unapproved) redisKeyParts.push('unapproved');
+
+    const redisKey = redisKeyParts.join('_');
+
     try {
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving searched anime data from cache 🎉");
+            return response.send(JSON.parse(cachedData));
+        }
+
         const searchAnimeUrl = `${URLs.jikan}/anime?${queryParams.toString()}`;
         const searchAnime = await axios.get(searchAnimeUrl);
         const searchAnimeData = searchAnime.data;
@@ -521,7 +584,9 @@ router.get("/search/anime", async (request, response) => {
             });
         }
 
-        logger.info(`Fetched searched anime, at ${new Date().toISOString()}`);
+        await redisClient.set(redisKey, JSON.stringify(searchAnimeData), 'EX', 3600);
+
+        logger.info(`Fetched searched anime with query parameters: ${JSON.stringify(request.query)} at ${new Date().toISOString()}`);
         response.send(searchAnimeData);
     } catch (err) {
         handleError(err, response);
