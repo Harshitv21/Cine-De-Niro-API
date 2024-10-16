@@ -11,6 +11,7 @@ import express from 'express';
 import axios from 'axios';
 import logger from '../utils/logger.js';
 import { URLs, options } from '../config/constants.js';
+import redisClient from '../caching/redisClient.js';
 
 const router = express.Router();
 
