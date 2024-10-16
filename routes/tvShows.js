@@ -29,19 +29,30 @@ router.get("/trending/tv/:time_window?", async (request, response) => {
         });
     }
 
-    try {
-        const url = `${URLs.tmdb}/trending/tv/${time_window}?language=en-US`;
+    // Create a Redis key based on the time_window
+    const redisKey = `trending_tv_${time_window}`;
 
+    try {
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving trending TV data from cache 🎥📺");
+            return response.send(JSON.parse(cachedData));
+        }
+
+        const url = `${URLs.tmdb}/trending/tv/${time_window}?language=en-US`;
         const trending = await axios.get(url, options);
         const trendingData = trending.data.results;
 
-        const modifiedTrendingData = trendingData.map(movie => ({
-            ...movie,
-            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
-            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
+        const modifiedTrendingData = trendingData.map(tv => ({
+            ...tv,
+            backdrop_path: tv.backdrop_path ? URLs.image + tv.backdrop_path : null,
+            poster_path: tv.poster_path ? URLs.image + tv.poster_path : null
         }));
 
         logger.info(`Successfully fetched trending TV shows at ${new Date().toISOString()}`);
+
+        await redisClient.set(redisKey, JSON.stringify(modifiedTrendingData), 'EX', 3600);
+
         response.send(modifiedTrendingData);
     } catch (err) {
         handleError(err, response);
@@ -54,9 +65,17 @@ router.get("/trending/tv/:time_window?", async (request, response) => {
 router.get("/popular/tv", async (request, response) => {
     const { page = 1 } = request.query;
 
-    try {
-        const url = `${URLs.tmdb}/tv/top_rated?language=en-US&page=${page}`;
+    // Create a Redis key based on the current page
+    const redisKey = `popular_tv_${page}`;
 
+    try {
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving popular TV data from cache 📺✨");
+            return response.send(JSON.parse(cachedData));
+        }
+
+        const url = `${URLs.tmdb}/tv/top_rated?language=en-US&page=${page}`;
         const popular = await axios.get(url, options);
         const popularData = popular.data;
 
@@ -87,9 +106,12 @@ router.get("/popular/tv", async (request, response) => {
             current_page: popularData.page,
             total_pages: popularData.total_pages,
             total_results: popularData.total_results
-        }
+        };
 
         logger.info(`Successfully fetched popular TV shows at ${new Date().toISOString()}`);
+
+        await redisClient.set(redisKey, JSON.stringify({ pagination: pageInfo, popular_tv_shows: modifiedPopularData }), 'EX', 3600);
+
         response.send({ pagination: pageInfo, popular_tv_shows: modifiedPopularData });
     } catch (err) {
         handleError(err, response);
@@ -100,7 +122,15 @@ router.get("/popular/tv", async (request, response) => {
 /*                  Search TV                  */
 /* =========================================== */
 router.get("/search/tv", async (request, response) => {
-    const { page, query, first_air_date_year, region, year, include_adult } = request.query;
+    const {
+        page = 1,
+        limit = 25,
+        query,
+        first_air_date_year,
+        region,
+        year,
+        include_adult
+    } = request.query;
 
     // Fixed parameters for every request
     const fixedParams = {
@@ -110,11 +140,11 @@ router.get("/search/tv", async (request, response) => {
     const queryParams = new URLSearchParams({
         ...fixedParams,
         query: query || '',
-        first_air_date_year: first_air_date_year ?? '',
-        region: region ?? '',
-        year: year ?? '',
-        page: page ?? 1,
-        include_adult: include_adult ?? false
+        first_air_date_year: first_air_date_year || '',
+        region: region || '',
+        year: year || '',
+        page: page || 1,
+        include_adult: include_adult || false
     }).toString();
 
     if (!query) {
@@ -123,7 +153,24 @@ router.get("/search/tv", async (request, response) => {
         });
     }
 
+    // Generate Redis key based on existing query parameters
+    const redisKeyParts = [`search_tv_${page}`];
+
+    if (query) redisKeyParts.push(`query_${query}`);
+    if (first_air_date_year) redisKeyParts.push(`first_air_date_year_${first_air_date_year}`);
+    if (region) redisKeyParts.push(`region_${region}`);
+    if (year) redisKeyParts.push(`year_${year}`);
+    if (include_adult) redisKeyParts.push(`include_adult`);
+
+    const redisKey = redisKeyParts.join('_');
+
     try {
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving TV search data from cache 📺🍿");
+            return response.send(JSON.parse(cachedData));
+        }
+
         const searchTvUrl = `${URLs.tmdb}/search/tv?${queryParams}`;
         const searchTv = await axios.get(searchTvUrl, options);
         const searchTvData = searchTv.data;
@@ -155,7 +202,9 @@ router.get("/search/tv", async (request, response) => {
             current_page: searchTvData.page,
             total_pages: searchTvData.total_pages,
             total_results: searchTvData.total_results
-        }
+        };
+
+        await redisClient.set(redisKey, JSON.stringify({ pagination: pageInfo, search_result: formattedTVShows }), 'EX', 3600);
 
         logger.info(`Successfully fetched TV shows for query "${query}" at ${new Date().toISOString()}`);
         response.send({ pagination: pageInfo, search_result: formattedTVShows });
@@ -174,7 +223,16 @@ router.get("/images/tv/:id", async (request, response) => {
         include_image_language: "en"
     }).toString();
 
+    // Generate Redis key based on TV show ID
+    const redisKey = `tv_images_${tvId}`;
+
     try {
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData) {
+            logger.info("Serving TV images data from cache 📸🎞️");
+            return response.send(JSON.parse(cachedData));
+        }
+
         const fetchTvImagesUrl = `${URLs.tmdb}/tv/${tvId}/images?${queryParams}`;
         const fetchedImages = await axios.get(fetchTvImagesUrl, options);
         const fetchedImagesData = fetchedImages.data;
@@ -194,6 +252,9 @@ router.get("/images/tv/:id", async (request, response) => {
         })) || []; // Fallback to an empty array
 
         logger.info(`Successfully fetched images for TV show ID: "${tvId}" at ${new Date().toISOString()}`);
+
+        await redisClient.set(redisKey, JSON.stringify({ backdrops: backdropsArray, posters: postersArray }), 'EX', 3600);
+
         response.send({ backdrops: backdropsArray, posters: postersArray });
     } catch (err) {
         handleError(err, response);
