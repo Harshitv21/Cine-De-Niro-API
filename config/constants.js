@@ -25,7 +25,7 @@ export const PORT = process.env.PORT || 3000;
 /* =============================================== */
 export const URLs = {
     tmdb: "https://api.themoviedb.org/3",
-    image: "https://image.tmdb.org/t/p/w500",
+    image: "https://image.tmdb.org/t/p/original",
     jikan: "https://api.jikan.moe/v4"
 };
 
