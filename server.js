@@ -22,6 +22,7 @@ import securityHeaders from './config/securityHeaders.js';
 import movieRoutes from './routes/movies.js';
 import tvShowRoutes from './routes/tvShows.js';
 import animeRoutes from './routes/anime.js';
+import { tmdbLimiter, jikanLimiter, jikanMinuteLimiter } from './middlewares/rateLimiter.js';
 
 const app = express();
 
@@ -70,8 +71,14 @@ app.get("/", (request, response) => {
 ███████╗██║ ╚████║██████╔╝██║     ╚██████╔╝██║██║ ╚████║   ██║   ███████║
 ╚══════╝╚═╝  ╚═══╝╚═════╝ ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
 */
+// Apply TMDB rate limiter for movie and TV show routes
+app.use(tmdbLimiter);  
 app.use(movieRoutes);
 app.use(tvShowRoutes);
+
+// Apply Jikan per second limiter + Jikan per minute limiter for anime routes
+app.use(jikanLimiter); 
+app.use(jikanMinuteLimiter); 
 app.use(animeRoutes);
 
 /*
