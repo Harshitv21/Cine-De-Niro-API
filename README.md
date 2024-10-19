@@ -63,21 +63,21 @@ AUTH_TOKEN=<your_tmdb_api_key>
 
 ### Running Locally
 
-1. **Clone the repository**:
+1. **Clone the repository**
 
 ```bash
 git clone https://github.com/Harshitv21/Anime-Movie-API.git
 cd Anime-Movie-API
 ```
 
-2. **Install dependencies**:
+2. **Install dependencies**
 
 ```bash
 npm install
 ```
 
-3. **Set up environment variables**:
-Create a `.env` file in the root directory with the following values:
+3. **Set up environment variables**
+Create a `.env` file in the root directory with the following values (for local setup only):
 
 ```bash
 AUTH_TOKEN=<your_tmdb_api_key>
@@ -86,13 +86,17 @@ REDIS_PORT=6379
 REDIS_PASSWORD=<in_case_using_redis_cloud>
 ```
 
-4. **Run Redis in Docker**:
+4. **Run Redis in Docker**
+
+**_Much_** clear instructions on installation [here](https://redis.io/docs/latest/operate/oss_and_stack/install/install-stack/docker/)
+
+Exposing docker port to `localhost:8001`,
 
 ```bash
-docker run -d -p 6379:6379 redis
+docker run -d -p 6379:8001 redis
 ```
 
-5. **Start the server**:
+1. **Start the server**
 
 ```bash
 npm start
@@ -100,25 +104,34 @@ npm start
 
 6. **Test the API locally** by accessing `http://localhost:3000`.
 
+### Setting up Redis on cloud
+
+You can either setup the Redis server through Docker (as shown above) or use Redis cloud if you want to deploy it for yourself more on that [here](https://cloud.redis.io/#/databases).
+After creating a Database use the credentials in `middlewares/rateLimiter.js` + `.env` file and Redis on cloud is ready for your deployment!
+
 ## Deployment
 
 ### AWS Elastic Beanstalk
 
+> You may need to create an AWS account and enter your card details (In case one doesn't exists already 😛) Which _might_ cost you some money (it costed me around a dollar or something for a month) so proceed with this step carefully!
+
 To deploy this project on AWS Elastic Beanstalk, follow these steps:
 
-1. **Install Elastic Beanstalk CLI**:
+1. **Install Elastic Beanstalk CLI**
 
 ```bash
 pip install awsebcli
 ```
 
-2. **Initialize Elastic Beanstalk**:
+2. **Initialize Elastic Beanstalk**
 
 ```bash
 eb init
 ```
 
-3. **Create an environment and deploy**:
+> Go through the configuration
+
+3. **Create an environment and deploy**
 
  ```bash
 eb create
@@ -151,16 +164,12 @@ The API uses Redis to cache popular, trending, and search results to improve per
 
 ## Postman Documentation
 
-You can explore and interact with the API using the Postman collection:
-[Postman Collection Link](#)
+You can explore and interact with the API using the Postman collection which provides a much comprehensive documentation:
+[Postman Collection Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley)
 
 ## Contributing
 
 Feel free to contribute to this project by opening an issue or submitting a pull request. All contributions are welcome!
-
-## License
-
-This project is licensed under the MIT License.
 
 ## Contact
 
@@ -168,5 +177,6 @@ If you have any questions, feel free to reach out:
 
 - **Author**: Harshit Kumar Verma
 - **GitHub**: [Harshitv21](https://github.com/Harshitv21)
+- **LinkedIn**: [harshitkverma](https://www.linkedin.com/in/harshitkverma/)
 
 ---
