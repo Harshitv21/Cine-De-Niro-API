@@ -89,6 +89,10 @@
       color: #555;
     }
 
+    .feature-section {
+      margin-bottom: 20px;
+    }
+
     /* Responsive styles */
     @media (max-width: 600px) {
       h1 {
@@ -106,32 +110,42 @@
   <div class="container">
     <h1>Anime & Movie API</h1>
 
-    <p class="api-description">This API provides access to trending, popular, and upcoming anime, movies, and TV shows. It leverages the <strong>Jikan API</strong> for anime data and the <strong>TMDB API</strong> for movie & TV show data. Integrate these endpoints into your applications to fetch information about anime, movies, and TV shows.</p>
+    <p class="api-description">Welcome to the <strong>Anime & Movie API</strong>, your go-to solution for accessing detailed and up-to-date information on anime, movies, and TV shows. Using data from the <strong>Jikan API</strong> for anime and the <strong>TMDB API</strong> for movies and TV shows, this API enables developers to build applications with dynamic media content.</p>
 
-    <h2>Features</h2>
+    <h2>Key Features</h2>
 
-    <h3>Anime Endpoints</h3>
-    <ul>
-      <li><code>GET</code> <strong>/trending/anime</strong> - Fetch currently trending anime series.</li>
-      <li><code>GET</code> <strong>/popular/anime</strong> - Retrieve a list of popular anime series.</li>
-      <li><code>GET</code> <strong>/upcoming/anime</strong> - Get information about upcoming anime releases.</li>
-    </ul>
+    <div class="feature-section">
+      <h3>Anime Endpoints (Powered by Jikan API)</h3>
+      <ul>
+        <li><code>GET</code> <strong>/trending/anime</strong> - Get the latest trending anime series.</li>
+        <li><code>GET</code> <strong>/popular/anime</strong> - Retrieve a list of popular anime shows, updated frequently.</li>
+        <li><code>GET</code> <strong>/upcoming/anime</strong> - Fetch details about upcoming anime releases.</li>
+        <li><code>GET</code> <strong>/search/anime</strong> - Search for specific anime titles using various filters such as genre, score, and more.</li>
+      </ul>
+    </div>
 
-    <h3>Movie Endpoints</h3>
-    <ul>
-      <li><code>GET</code> <strong>/trending/movies</strong> - Fetch currently trending movies.</li>
-      <li><code>GET</code> <strong>/popular/movies</strong> - Retrieve a list of popular movies.</li>
-      <li><code>GET</code> <strong>/upcoming/movies</strong> - Get information about upcoming movie releases.</li>
-    </ul>
+    <div class="feature-section">
+      <h3>Movie Endpoints (Powered by TMDB API)</h3>
+      <ul>
+        <li><code>GET</code> <strong>/trending/movies</strong> - Retrieve a list of movies currently trending.</li>
+        <li><code>GET</code> <strong>/popular/movies</strong> - Get a list of movies that are popular worldwide.</li>
+        <li><code>GET</code> <strong>/upcoming/movies</strong> - Access information on upcoming movie releases.</li>
+        <li><code>GET</code> <strong>/search/movies</strong> - Search for movies based on title, release date, and other criteria.</li>
+      </ul>
+    </div>
 
-    <h3>TV Endpoints</h3>
-    <ul>
-      <li><code>GET</code> <strong>/trending/tv</strong> - Fetch currently trending TV shows.</li>
-      <li><code>GET</code> <strong>/popular/tv</strong> - Retrieve a list of popular TV shows.</li>
-    </ul>
+    <div class="feature-section">
+      <h3>TV Show Endpoints (Powered by TMDB API)</h3>
+      <ul>
+        <li><code>GET</code> <strong>/trending/tv</strong> - Discover trending TV shows from across the globe.</li>
+        <li><code>GET</code> <strong>/popular/tv</strong> - Fetch popular TV shows from a wide variety of genres.</li>
+        <li><code>GET</code> <strong>/search/tv</strong> - Search for TV shows by name, genre, or other criteria.</li>
+      </ul>
+    </div>
 
     <footer>
-      <p>Made with ❤️ for anime and movie enthusiasts!</p>
+      <p>Made with ❤️ by anime and movie enthusiasts for developers around the world!</p>
+      <p>For detailed API documentation and examples, visit the <a href="#" target="_blank">Postman Collection</a>.</p>
     </footer>
   </div>
 
