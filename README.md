@@ -13,7 +13,7 @@ A comprehensive API that provides access to trending, popular, and upcoming anim
 - **Caching**: Implemented with Redis for efficient data retrieval.
 - **Rate Limiting**: Protects the API from abuse with rate limiting for Jikan and TMDB endpoints.
 - **Deployed on AWS and Railway**: Can be easily deployed on AWS Elastic Beanstalk or Railway.
-- **Postman Documentation**: [Postman Collection Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley)
+- **Postman Documentation**: [Postman Collection Link](https://documenter.getpostman.com/view/23414253/2sAXxWb9eu)
 
 ## API Endpoints
 
@@ -165,7 +165,7 @@ The API uses Redis to cache popular, trending, and search results to improve per
 ## Postman Documentation
 
 You can explore and interact with the API using the Postman collection which provides a much comprehensive documentation:
-[Postman Collection Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley)
+[Postman Collection Link](https://documenter.getpostman.com/view/23414253/2sAXxWb9eu)
 
 ## Contributing
 
