@@ -145,6 +145,7 @@ router.get("/search/tv", async (request, response) => {
         region: region || '',
         year: year || '',
         page: page || 1,
+        limit: limit || 25,
         include_adult: include_adult || false
     }).toString();
 
