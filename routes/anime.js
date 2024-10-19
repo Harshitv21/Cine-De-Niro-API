@@ -143,6 +143,7 @@ router.get("/popular/anime", async (request, response) => {
     // Define allowed filter values & validate
     const allowedFilters = ["airing", "upcoming", "bypopularity", "favorite"];
     const allowedTypes = ["tv", "movie", "ova", "special", "ona", "music", "cm", "pv", "tv_special"];
+    const allowedRatings = ["g", "pg", "pg13", "r17", "r", "rx"];
 
     if (filter && !allowedFilters.includes(filter)) {
         return response.status(400).send({ error: `Invalid filter value: "${filter}". Allowed values are: ${allowedFilters.join(", ")}` });
@@ -150,6 +151,10 @@ router.get("/popular/anime", async (request, response) => {
 
     if (type && !allowedTypes.includes(type)) {
         return response.status(400).send({ error: `Invalid type value: "${type}". Allowed values are: ${allowedTypes.join(", ")}` });
+    }
+
+    if (rating && !allowedRatings.includes(rating)) {
+        return response.status(400).send({ error: `Invalid rating value: "${type}". Allowed values are: ${allowedRatings.join(", ")}` });
     }
 
     // Generate Redis key dynamically based on existing query parameters
