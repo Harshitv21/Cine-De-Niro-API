@@ -46,7 +46,7 @@ A comprehensive API that provides access to trending, popular, and upcoming anim
 
 ### Prerequisites
 
-- Node.js (version 14 or higher)
+- Node.js (version 18 or higher)
 - Docker (for running Redis locally)
 - Redis CLI (for managing Redis, if needed)
 
