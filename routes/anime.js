@@ -15,113 +15,120 @@ import redisClient from '../caching/redisClient.js';
 
 const router = express.Router();
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 /* =============================================== */
 /*                  Trending anime                 */
 /* =============================================== */
 router.get("/trending/anime", async (request, response) => {
     let { page = 1, limit = 25, filter, sfw, unapproved, continuing } = request.query;
 
-    // Define allowed filter values & validate
     const allowedFilters = ["tv", "movie", "ova", "special", "ona", "music"];
-
     if (filter && !allowedFilters.includes(filter)) {
         return response.status(400).send({ error: `Invalid filter value: "${filter}". Allowed values are: ${allowedFilters.join(", ")}` });
     }
 
-    // Generate Redis key dynamically based on existing query parameters
     const redisKeyParts = [`trending_anime_${page}_${limit}`];
     if (filter) redisKeyParts.push(`filter_${filter}`);
     if (sfw) redisKeyParts.push(`sfw`);
     if (unapproved) redisKeyParts.push(`unapproved`);
     if (continuing) redisKeyParts.push(`continuing`);
-
     const redisKey = redisKeyParts.join('_');
 
     try {
-        let trendingAnimeUrl = `${URLs.jikan}/seasons/now?page=${page}&limit=${limit}`;
-
-        // Add filters if provided
-        if (filter) trendingAnimeUrl += `&filter=${filter}`;
-        if (sfw) trendingAnimeUrl += `&sfw`;
-        if (unapproved) trendingAnimeUrl += `&unapproved`;
-        if (continuing) trendingAnimeUrl += `&continuing`;
-
         const cachedData = await redisClient.get(redisKey);
         if (cachedData) {
             logger.info("Serving trending anime data from cache 🧑‍🍳🍽️🍕");
             return response.send(JSON.parse(cachedData));
         }
 
+        let trendingAnimeUrl = `${URLs.jikan}/seasons/now?page=${page}&limit=${limit}`;
+        if (filter) trendingAnimeUrl += `&filter=${filter}`;
+        if (sfw) trendingAnimeUrl += `&sfw`;
+        if (unapproved) trendingAnimeUrl += `&unapproved`;
+        if (continuing) trendingAnimeUrl += `&continuing`;
+
         const trending = await axios.get(trendingAnimeUrl);
         const trendingAnimeData = trending.data;
 
-        // Check if the requested page exceeds the last visible page
         if (page > trendingAnimeData.pagination.last_visible_page) {
             return response.status(404).json({
-                pagination: {
-                    current_page: page,
-                    last_visible_page: trendingAnimeData.pagination.last_visible_page,
-                    has_next_page: false,
-                    items: {
-                        count: 0,
-                        total: 0,
-                        per_page: limit
-                    }
-                },
-                results: [],
                 message: "No results found for the requested page."
             });
         }
 
-        const trendingAnimeArray = trendingAnimeData.data.slice(0, limit).map(anime => ({
-            mal_id: anime.mal_id,
-            mal_url: anime.url,
-            images: [
-                anime.images?.jpg?.image_url || null,
-                anime.images?.jpg?.large_image_url || null,
-                anime.trailer.images?.maximum_image_url || null
-            ],
-            trailer: {
-                yt_id: anime.trailer.youtube_id,
-                yt_url: anime.trailer.url,
-                embed_url: anime.trailer.embed_url
-            },
-            titles: {
-                default_title: anime.title,
-                japanese_title: anime.title_japanese,
-                english_title: anime.title_english
-            },
-            episodes: anime.episodes,
-            rating: anime.rating,
-            type: anime.type,
-            source: anime.source,
-            status: anime.status,
-            score: anime.score,
-            rank: anime.rank,
-            popularity: anime.popularity,
-            synopsis: anime.synopsis,
-            backgroud: anime.backgroud,
-            season: anime.season,
-            year: anime.year,
-            genres: anime.genres.map(genre => genre.name),
-            themes: anime.themes.map(theme => theme.name),
-            demographics: anime.demographics.map(demographic => demographic.name),
-            explicit_genres: anime.explicit_genres.map(genre => genre.name)
-        }));
+        const trendingAnimeArray = [];
 
-        const paginationInfo = {
-            current_page: page,
-            last_visible_page: trendingAnimeData.pagination.last_visible_page,
-            has_next_page: trendingAnimeData.pagination.has_next_page,
-            items: {
-                count: trendingAnimeData.pagination.items.count,
-                total: trendingAnimeData.pagination.items.total,
-                per_page: limit
+        for (const anime of trendingAnimeData.data) {
+            let directors = [];
+            let producers = [];
+            
+            try {
+                const staffDataUrl = `${URLs.jikan}/anime/${anime.mal_id}/staff`;
+                const { data: staffData } = await axios.get(staffDataUrl);
+                const staffArray = staffData.data;
+
+                if (staffArray && staffArray.length > 0) {
+                    directors = staffArray
+                        .filter(staffMember => staffMember.positions.includes('Director'))
+                        .map(staffMember => staffMember.person.name);
+
+                    producers = staffArray
+                        .filter(staffMember => staffMember.positions.includes('Producer'))
+                        .map(staffMember => staffMember.person.name);
+                }
+            } catch (error) {
+                if (!(error.response && error.response.status === 404)) {
+                    console.error(`Error fetching staff for anime ID ${anime.mal_id}:`, error.message);
+                }
             }
-        };
+            
+            const processedAnime = {
+                mal_id: anime.mal_id,
+                mal_url: anime.url,
+                images: [
+                    anime.images?.jpg?.image_url || null,
+                    anime.images?.jpg?.large_image_url || null,
+                    anime.trailer.images?.maximum_image_url || null
+                ],
+                trailer: {
+                    yt_id: anime.trailer.youtube_id,
+                    yt_url: anime.trailer.url,
+                    embed_url: anime.trailer.embed_url
+                },
+                titles: {
+                    default_title: anime.title,
+                    japanese_title: anime.title_japanese,
+                    english_title: anime.title_english
+                },
+                episodes: anime.episodes,
+                rating: anime.rating,
+                type: anime.type,
+                source: anime.source,
+                status: anime.status,
+                score: anime.score,
+                rank: anime.rank,
+                popularity: anime.popularity,
+                synopsis: anime.synopsis,
+                background: anime.background,
+                season: anime.season,
+                year: anime.year,
+                genres: anime.genres.map(genre => genre.name),
+                themes: anime.themes.map(theme => theme.name),
+                demographics: anime.demographics.map(demographic => demographic.name),
+                explicit_genres: anime.explicit_genres.map(genre => genre.name),
+                studios: anime.studios.map(studio => studio.name),
+                directors,
+                producers
+            };
+
+            trendingAnimeArray.push(processedAnime);
+
+            await delay(1000); 
+        }
 
         const responseData = {
-            pagination: paginationInfo,
+            pagination: trendingAnimeData.pagination,
             results: trendingAnimeArray
         };
 
