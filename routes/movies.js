@@ -12,6 +12,7 @@ import axios from 'axios';
 import logger from '../utils/logger.js';
 import { URLs, options } from '../config/constants.js';
 import redisClient from '../caching/redisClient.js';
+import getPaletteFromUrl from '../utils/colorPalette.js';
 
 const router = express.Router();
 
@@ -21,7 +22,6 @@ const router = express.Router();
 router.get("/trending/movies/:time_window?", async (request, response) => {
     const time_window = request.params.time_window || 'week';
 
-    // Validate that the time_window is either 'week' or 'day'
     const allowedValues = ['week', 'day'];
     if (!allowedValues.includes(time_window)) {
         return response.status(400).send({
@@ -29,7 +29,6 @@ router.get("/trending/movies/:time_window?", async (request, response) => {
         });
     }
 
-    // Generate a Redis key based on the time_window
     const redisKey = `trending_movies_${time_window}`;
 
     try {
@@ -43,16 +42,48 @@ router.get("/trending/movies/:time_window?", async (request, response) => {
         const trending = await axios.get(url, options);
         const trendingData = trending.data.results;
 
-        const modifiedTrendingData = trendingData.map(movie => ({
-            ...movie,
-            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
-            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null,
-        }));
+        const trendingDataPromises = trendingData.map(async (movie) => {
+            try {
+                const [detailsResponse, creditsResponse, palette] = await Promise.all([
+                    axios.get(`${URLs.tmdb}/movie/${movie.id}`, options),
+                    axios.get(`${URLs.tmdb}/movie/${movie.id}/credits`, options),
+                    getPaletteFromUrl(movie.poster_path ? URLs.image + movie.poster_path : null)
+                ]);
 
-        await redisClient.set(redisKey, JSON.stringify(modifiedTrendingData), 'EX', 3600);
+                const { tagline, runtime } = detailsResponse.data;
+                const { cast, crew } = creditsResponse.data;
+
+                const directorNames = crew.filter(person => person.job === 'Director').map(person => person.name);
+                const writersCrew = crew.filter(person => person.department === 'Writing');
+                const writerNames = [...new Set(writersCrew.map(person => person.name))];
+                const topCast = cast.slice(0, 6).map(p => p.name);
+
+                return {
+                    ...movie,
+                    runtime,
+                    release_year: movie.release_date ? new Date(movie.release_date).getFullYear() : null,
+                    tagline,
+                    directors: directorNames,
+                    writers: writerNames,
+                    cast: topCast,
+                    palette,
+                    backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
+                    poster_path: movie.poster_path ? URLs.image + movie.poster_path : null,
+                };
+            } catch (err) {
+                console.error(`Failed to process movie ID ${movie.id}:`, err.message);
+                return null;
+            }
+        });
+
+        const resolvedMovies = await Promise.all(trendingDataPromises);
+
+        const successfulMovies = resolvedMovies.filter(movie => movie !== null);
+
+        await redisClient.set(redisKey, JSON.stringify(successfulMovies), 'EX', 3600);
 
         logger.info(`Fetched trending movies for time_window "${time_window}" at ${new Date().toISOString()}`);
-        response.send(modifiedTrendingData);
+        response.send(successfulMovies);
     } catch (err) {
         handleError(err, response);
     }
@@ -82,7 +113,7 @@ router.get("/popular/movies", async (request, response) => {
             return response.status(404).json({
                 pagination: {
                     current_page: page,
-                    last_visible_page: popularData.total_pages,
+                    total_pages: popularData.total_pages,
                     has_next_page: false,
                     items: {
                         total_pages: popularData.total_pages,
@@ -94,11 +125,39 @@ router.get("/popular/movies", async (request, response) => {
             });
         }
 
-        const modifiedPopularData = popularData.results.map(movie => ({
-            ...movie,
-            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
-            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
-        }));
+        const popularDataPromises = popularData.results.map(async (movie) => {
+            try {
+                const [detailsResponse, creditsResponse, palette] = await Promise.all([
+                    axios.get(`${URLs.tmdb}/movie/${movie.id}`, options),
+                    axios.get(`${URLs.tmdb}/movie/${movie.id}/credits`, options),
+                    getPaletteFromUrl(movie.poster_path ? URLs.image + movie.poster_path : null)
+                ]);
+
+                const { tagline, runtime } = detailsResponse.data;
+                const { cast, crew } = creditsResponse.data;
+
+                const directorNames = crew.filter(person => person.job === 'Director').map(person => person.name);
+                const writersCrew = crew.filter(person => person.department === 'Writing');
+                const writerNames = [...new Set(writersCrew.map(person => person.name))];
+                const topCast = cast.slice(0, 6).map(p => p.name);
+
+                return {
+                    ...movie,
+                    runtime,
+                    release_year: movie.release_date ? new Date(movie.release_date).getFullYear() : null,
+                    tagline,
+                    directors: directorNames,
+                    writers: writerNames,
+                    cast: topCast,
+                    palette,
+                    backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
+                    poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
+                };
+            } catch (err) {
+                console.error(`Failed to process movie ID ${movie.id}:`, err.message);
+                return null;
+            }
+        });
 
         const pageInfo = {
             current_page: popularData.page,
@@ -106,7 +165,10 @@ router.get("/popular/movies", async (request, response) => {
             total_results: popularData.total_results
         };
 
-        const responseData = { pagination: pageInfo, popular_movies: modifiedPopularData };
+        const resolvedMovies = await Promise.all(popularDataPromises);
+        const successfulMovies = resolvedMovies.filter(movie => movie !== null);
+
+        const responseData = { pagination: pageInfo, popular_movies: successfulMovies };
 
         await redisClient.set(redisKey, JSON.stringify(responseData), 'EX', 3600);
 
@@ -142,7 +204,7 @@ router.get("/upcoming/movies", async (request, response) => {
             return response.status(404).json({
                 pagination: {
                     current_page: page,
-                    last_visible_page: upcomingData.total_pages,
+                    total_pages: upcomingData.total_pages,
                     has_next_page: false,
                     items: {
                         total_pages: upcomingData.total_pages,
@@ -154,11 +216,39 @@ router.get("/upcoming/movies", async (request, response) => {
             });
         }
 
-        const modifiedUpcomingData = upcomingData.results.map(movie => ({
-            ...movie,
-            backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
-            poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
-        }));
+        const upcomingDataPromises = upcomingData.results.map(async (movie) => {
+            try {
+                const [detailsResponse, creditsResponse, palette] = await Promise.all([
+                    axios.get(`${URLs.tmdb}/movie/${movie.id}`, options),
+                    axios.get(`${URLs.tmdb}/movie/${movie.id}/credits`, options),
+                    getPaletteFromUrl(movie.poster_path ? URLs.image + movie.poster_path : null)
+                ])
+
+                const { tagline, runtime } = detailsResponse.data;
+                const { cast, crew } = creditsResponse.data;
+
+                const directorNames = crew.filter(person => person.job === 'Director').map(person => person.name);
+                const writersCrew = crew.filter(person => person.department === 'Writing');
+                const writerNames = [...new Set(writersCrew.map(person => person.name))];
+                const topCast = cast.slice(0, 6).map(p => p.name);
+
+                return {
+                    ...movie,
+                    runtime,
+                    release_year: movie.release_date ? new Date(movie.release_date).getFullYear() : null,
+                    tagline,
+                    directors: directorNames,
+                    writers: writerNames,
+                    cast: topCast,
+                    palette,
+                    backdrop_path: movie.backdrop_path ? URLs.image + movie.backdrop_path : null,
+                    poster_path: movie.poster_path ? URLs.image + movie.poster_path : null
+                };
+            } catch (err) {
+                console.error(`Failed to process movie ID ${movie.id}:`, err.message);
+                return null;
+            }
+        })
 
         const pageInfo = {
             current_page: upcomingData.page,
@@ -166,7 +256,10 @@ router.get("/upcoming/movies", async (request, response) => {
             total_results: upcomingData.total_results,
         };
 
-        const responseData = { pagination: pageInfo, upcoming_movies: modifiedUpcomingData };
+        const resolvedMovies = await Promise.all(upcomingDataPromises);
+        const successfulMovies = resolvedMovies.filter(movie => movie !== null);
+
+        const responseData = { pagination: pageInfo, upcoming_movies: successfulMovies };
 
         await redisClient.set(redisKey, JSON.stringify(responseData), 'EX', 3600);
 
@@ -261,6 +354,14 @@ router.get("/search/movies", async (request, response) => {
 
         logger.info(`Fetched movies for query "${query}" with page ${page} at ${new Date().toISOString()}`);
         response.send(responseData);
+    } catch (err) {
+        handleError(err, response);
+    }
+});
+
+router.get("/search/movies/:id", async (request, response) => {
+    try {
+
     } catch (err) {
         handleError(err, response);
     }

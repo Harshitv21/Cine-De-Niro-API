@@ -12,6 +12,7 @@ import axios from 'axios';
 import logger from '../utils/logger.js';
 import { URLs, options } from '../config/constants.js';
 import redisClient from '../caching/redisClient.js';
+import getPaletteFromUrl from '../utils/colorPalette.js';
 
 const router = express.Router();
 
@@ -44,17 +45,49 @@ router.get("/trending/tv/:time_window?", async (request, response) => {
         const trending = await axios.get(url, options);
         const trendingData = trending.data.results;
 
-        const modifiedTrendingData = trendingData.map(tv => ({
-            ...tv,
-            backdrop_path: tv.backdrop_path ? URLs.image + tv.backdrop_path : null,
-            poster_path: tv.poster_path ? URLs.image + tv.poster_path : null
-        }));
+        const trendingDataPromises = trendingData.map(async (tv) => {
+            try {
+                const [detailsResponse, creditsResponse, palette] = await Promise.all([
+                    axios.get(`${URLs.tmdb}/tv/${tv.id}`, options),
+                    axios.get(`${URLs.tmdb}/tv/${tv.id}/credits`, options),
+                    getPaletteFromUrl(tv.poster_path ? URLs.image + tv.poster_path : null)
+                ])
+
+                const { created_by, first_air_date, last_air_date, networks, number_of_episodes, number_of_seasons } = detailsResponse.data;
+
+                const { cast } = creditsResponse.data;
+                const topCast = cast.slice(0, 6).map(p => p.name);
+
+                return {
+                    ...tv,
+                    creators: created_by.map(person => person.name),
+                    network: {
+                        name: networks[0].name,
+                        logo: URLs.image + networks[0].logo_path
+                    },
+                    number_of_seasons,
+                    number_of_episodes,
+                    start_year: new Date(first_air_date).getFullYear(),
+                    end_year: last_air_date ? new Date(last_air_date).getFullYear() : null,
+                    cast: topCast,
+                    palette,
+                    backdrop_path: tv.backdrop_path ? URLs.image + tv.backdrop_path : null,
+                    poster_path: tv.poster_path ? URLs.image + tv.poster_path : null
+                }
+            } catch (err) {
+                console.error(`Failed to process tv ID ${tv.id}:`, err.message);
+                return null;
+            }
+        });
+
+        const resolvedTVShows = await Promise.all(trendingDataPromises);
+
+        const successfulTVShows = resolvedTVShows.filter(tv => tv !== null);
+
+        await redisClient.set(redisKey, JSON.stringify(successfulTVShows), 'EX', 3600);
 
         logger.info(`Successfully fetched trending TV shows at ${new Date().toISOString()}`);
-
-        await redisClient.set(redisKey, JSON.stringify(modifiedTrendingData), 'EX', 3600);
-
-        response.send(modifiedTrendingData);
+        response.send(successfulTVShows);
     } catch (err) {
         handleError(err, response);
     }
@@ -85,7 +118,7 @@ router.get("/popular/tv", async (request, response) => {
             return response.status(404).json({
                 pagination: {
                     current_page: page,
-                    last_visible_page: popularData.total_pages,
+                    total_pages: popularData.total_pages,
                     has_next_page: false,
                     items: {
                         total_pages: popularData.total_pages,
@@ -97,11 +130,40 @@ router.get("/popular/tv", async (request, response) => {
             });
         }
 
-        const modifiedPopularData = popularData.results.map(tv => ({
-            ...tv,
-            backdrop_path: tv.backdrop_path ? URLs.image + tv.backdrop_path : null,
-            poster_path: tv.poster_path ? URLs.image + tv.poster_path : null
-        }));
+        const popularDataPromises = popularData.results.map(async (tv) => {
+            try {
+                const [detailsResponse, creditsResponse, palette] = await Promise.all([
+                    axios.get(`${URLs.tmdb}/tv/${tv.id}`, options),
+                    axios.get(`${URLs.tmdb}/tv/${tv.id}/credits`, options),
+                    getPaletteFromUrl(tv.poster_path ? URLs.image + tv.poster_path : null)
+                ])
+
+                const { created_by, first_air_date, last_air_date, networks, number_of_episodes, number_of_seasons } = detailsResponse.data;
+
+                const { cast } = creditsResponse.data;
+                const topCast = cast.slice(0, 6).map(p => p.name);
+
+                return {
+                    ...tv,
+                    creators: created_by.map(person => person.name),
+                    network: {
+                        name: networks[0].name,
+                        logo: URLs.image + networks[0].logo_path
+                    },
+                    number_of_seasons,
+                    number_of_episodes,
+                    start_year: new Date(first_air_date).getFullYear(),
+                    end_year: last_air_date ? new Date(last_air_date).getFullYear() : null,
+                    cast: topCast,
+                    palette,
+                    backdrop_path: tv.backdrop_path ? URLs.image + tv.backdrop_path : null,
+                    poster_path: tv.poster_path ? URLs.image + tv.poster_path : null
+                }
+            } catch (err) {
+                console.error(`Failed to process tv ID ${tv.id}:`, err.message);
+                return null;
+            }
+        });
 
         const pageInfo = {
             current_page: popularData.page,
@@ -109,11 +171,14 @@ router.get("/popular/tv", async (request, response) => {
             total_results: popularData.total_results
         };
 
+        const resolvedTVShows = await Promise.all(popularDataPromises);
+
+        const successfulTVShows = resolvedTVShows.filter(tv => tv !== null);
+
+        await redisClient.set(redisKey, JSON.stringify({ pagination: pageInfo, popular_tv_shows: successfulTVShows }), 'EX', 3600);
+
         logger.info(`Successfully fetched popular TV shows at ${new Date().toISOString()}`);
-
-        await redisClient.set(redisKey, JSON.stringify({ pagination: pageInfo, popular_tv_shows: modifiedPopularData }), 'EX', 3600);
-
-        response.send({ pagination: pageInfo, popular_tv_shows: modifiedPopularData });
+        response.send({ pagination: pageInfo, popular_tv_shows: successfulTVShows });
     } catch (err) {
         handleError(err, response);
     }

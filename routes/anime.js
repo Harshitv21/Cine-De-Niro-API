@@ -12,6 +12,7 @@ import axios from 'axios';
 import logger from '../utils/logger.js';
 import { URLs } from '../config/constants.js';
 import redisClient from '../caching/redisClient.js';
+import getPaletteFromUrl from '../utils/colorPalette.js';
 
 const router = express.Router();
 
@@ -62,10 +63,16 @@ router.get("/trending/anime", async (request, response) => {
         for (const anime of trendingAnimeData.data) {
             let directors = [];
             let producers = [];
-            
+            let pallete = null;
+            const imageUrl = anime.images?.jpg?.large_image_url ||
+                anime.images?.jpg?.image_url ||
+                anime.images?.jpg?.small_image_url ||
+                null;
+
             try {
                 const staffDataUrl = `${URLs.jikan}/anime/${anime.mal_id}/staff`;
                 const { data: staffData } = await axios.get(staffDataUrl);
+                pallete = await getPaletteFromUrl(imageUrl);
                 const staffArray = staffData.data;
 
                 if (staffArray && staffArray.length > 0) {
@@ -82,7 +89,7 @@ router.get("/trending/anime", async (request, response) => {
                     console.error(`Error fetching staff for anime ID ${anime.mal_id}:`, error.message);
                 }
             }
-            
+
             const processedAnime = {
                 mal_id: anime.mal_id,
                 mal_url: anime.url,
@@ -119,12 +126,13 @@ router.get("/trending/anime", async (request, response) => {
                 explicit_genres: anime.explicit_genres.map(genre => genre.name),
                 studios: anime.studios.map(studio => studio.name),
                 directors,
-                producers
+                producers,
+                pallete
             };
 
             trendingAnimeArray.push(processedAnime);
 
-            await delay(1000); 
+            await delay(1000);
         }
 
         const responseData = {
@@ -208,41 +216,82 @@ router.get("/popular/anime", async (request, response) => {
             });
         }
 
-        const popularAnimeArray = popularAnimeData.data.slice(0, limit).map(anime => ({
-            mal_id: anime.mal_id,
-            mal_url: anime.url,
-            images: [
-                anime.images.jpg.image_url,
-                anime.images.jpg.large_image_url,
-                anime.trailer.images?.maximum_image_url || null
-            ],
-            trailer: {
-                yt_id: anime.trailer.youtube_id,
-                yt_url: anime.trailer.url,
-                embed_url: anime.trailer.embed_url
-            },
-            titles: {
-                default_title: anime.title,
-                japanese_title: anime.title_japanese,
-                english_title: anime.title_english
-            },
-            episodes: anime.episodes,
-            rating: anime.rating,
-            type: anime.type,
-            source: anime.source,
-            status: anime.status,
-            score: anime.score,
-            rank: anime.rank,
-            popularity: anime.popularity,
-            synopsis: anime.synopsis,
-            backgroud: anime.backgroud,
-            season: anime.season,
-            year: anime.year,
-            genres: anime.genres.map(genre => genre.name),
-            themes: anime.themes.map(theme => theme.name),
-            demographics: anime.demographics.map(demographic => demographic.name),
-            explicit_genres: anime.explicit_genres.map(genre => genre.name)
-        }));
+        const popularAnimeArray = [];
+
+        for (const anime of popularAnimeData.data) {
+            let directors = [];
+            let producers = [];
+            let pallete = null;
+            const imageUrl = anime.images?.jpg?.large_image_url ||
+                anime.images?.jpg?.image_url ||
+                anime.images?.jpg?.small_image_url ||
+                null;
+
+            try {
+                const staffDataUrl = `${URLs.jikan}/anime/${anime.mal_id}/staff`;
+                const { data: staffData } = await axios.get(staffDataUrl);
+                pallete = await getPaletteFromUrl(imageUrl);
+                const staffArray = staffData.data;
+
+                if (staffArray && staffArray.length > 0) {
+                    directors = staffArray
+                        .filter(staffMember => staffMember.positions.includes('Director'))
+                        .map(staffMember => staffMember.person.name);
+
+                    producers = staffArray
+                        .filter(staffMember => staffMember.positions.includes('Producer'))
+                        .map(staffMember => staffMember.person.name);
+                }
+            } catch (error) {
+                if (!(error.response && error.response.status === 404)) {
+                    console.error(`Error fetching staff for anime ID ${anime.mal_id}:`, error.message);
+                }
+            }
+
+            const processedAnime = {
+                mal_id: anime.mal_id,
+                mal_url: anime.url,
+                images: [
+                    anime.images.jpg.image_url,
+                    anime.images.jpg.large_image_url,
+                    anime.trailer.images?.maximum_image_url || null
+                ],
+                trailer: {
+                    yt_id: anime.trailer.youtube_id,
+                    yt_url: anime.trailer.url,
+                    embed_url: anime.trailer.embed_url
+                },
+                titles: {
+                    default_title: anime.title,
+                    japanese_title: anime.title_japanese,
+                    english_title: anime.title_english
+                },
+                episodes: anime.episodes,
+                rating: anime.rating,
+                type: anime.type,
+                source: anime.source,
+                status: anime.status,
+                score: anime.score,
+                rank: anime.rank,
+                popularity: anime.popularity,
+                synopsis: anime.synopsis,
+                backgroud: anime.backgroud,
+                season: anime.season,
+                year: anime.year,
+                genres: anime.genres.map(genre => genre.name),
+                themes: anime.themes.map(theme => theme.name),
+                demographics: anime.demographics.map(demographic => demographic.name),
+                explicit_genres: anime.explicit_genres.map(genre => genre.name),
+                studios: anime.studios.map(studio => studio.name),
+                directors,
+                producers,
+                pallete
+            };
+
+            popularAnimeArray.push(processedAnime);
+
+            await delay(1000);
+        }
 
         const paginationInfo = {
             current_page: page,
@@ -327,41 +376,82 @@ router.get("/upcoming/anime", async (request, response) => {
             });
         }
 
-        const upcomingAnimeArray = upcomingAnimeData.data.slice(0, limit).map(anime => ({
-            mal_id: anime.mal_id,
-            mal_url: anime.url,
-            images: [
-                anime.images.jpg.image_url,
-                anime.images.jpg.large_image_url,
-                anime.trailer.images?.maximum_image_url || null
-            ],
-            trailer: {
-                yt_id: anime.trailer.youtube_id,
-                yt_url: anime.trailer.url,
-                embed_url: anime.trailer.embed_url
-            },
-            titles: {
-                default_title: anime.title,
-                japanese_title: anime.title_japanese,
-                english_title: anime.title_english
-            },
-            episodes: anime.episodes,
-            rating: anime.rating,
-            type: anime.type,
-            source: anime.source,
-            status: anime.status,
-            score: anime.score,
-            rank: anime.rank,
-            popularity: anime.popularity,
-            synopsis: anime.synopsis,
-            backgroud: anime.backgroud,
-            season: anime.season,
-            year: anime.year,
-            genres: anime.genres.map(genre => genre.name),
-            themes: anime.themes.map(theme => theme.name),
-            demographics: anime.demographics.map(demographic => demographic.name),
-            explicit_genres: anime.explicit_genres.map(genre => genre.name)
-        }));
+        const upcomingAnimeArray = [];
+
+        for (const anime of upcomingAnimeData.data) {
+            let directors = [];
+            let producers = [];
+            let pallete = null;
+            const imageUrl = anime.images?.jpg?.large_image_url ||
+                anime.images?.jpg?.image_url ||
+                anime.images?.jpg?.small_image_url ||
+                null;
+
+            try {
+                const staffDataUrl = `${URLs.jikan}/anime/${anime.mal_id}/staff`;
+                const { data: staffData } = await axios.get(staffDataUrl);
+                pallete = await getPaletteFromUrl(imageUrl);
+                const staffArray = staffData.data;
+
+                if (staffArray && staffArray.length > 0) {
+                    directors = staffArray
+                        .filter(staffMember => staffMember.positions.includes('Director'))
+                        .map(staffMember => staffMember.person.name);
+
+                    producers = staffArray
+                        .filter(staffMember => staffMember.positions.includes('Producer'))
+                        .map(staffMember => staffMember.person.name);
+                }
+            } catch (error) {
+                if (!(error.response && error.response.status === 404)) {
+                    console.error(`Error fetching staff for anime ID ${anime.mal_id}:`, error.message);
+                }
+            }
+
+            const processedAnime = {
+                mal_id: anime.mal_id,
+                mal_url: anime.url,
+                images: [
+                    anime.images.jpg.image_url,
+                    anime.images.jpg.large_image_url,
+                    anime.trailer.images?.maximum_image_url || null
+                ],
+                trailer: {
+                    yt_id: anime.trailer.youtube_id,
+                    yt_url: anime.trailer.url,
+                    embed_url: anime.trailer.embed_url
+                },
+                titles: {
+                    default_title: anime.title,
+                    japanese_title: anime.title_japanese,
+                    english_title: anime.title_english
+                },
+                episodes: anime.episodes,
+                rating: anime.rating,
+                type: anime.type,
+                source: anime.source,
+                status: anime.status,
+                score: anime.score,
+                rank: anime.rank,
+                popularity: anime.popularity,
+                synopsis: anime.synopsis,
+                backgroud: anime.backgroud,
+                season: anime.season,
+                year: anime.year,
+                genres: anime.genres.map(genre => genre.name),
+                themes: anime.themes.map(theme => theme.name),
+                demographics: anime.demographics.map(demographic => demographic.name),
+                explicit_genres: anime.explicit_genres.map(genre => genre.name),
+                studios: anime.studios.map(studio => studio.name),
+                directors,
+                producers,
+                pallete
+            };
+
+            upcomingAnimeArray.push(processedAnime);
+
+            await delay(1000);
+        }
 
         const paginationInfo = {
             current_page: page,
@@ -393,11 +483,7 @@ router.get("/upcoming/anime", async (request, response) => {
 /* ================================================== */
 router.get("/search/anime/:id", async (request, response) => {
     const animeId = request.params.id;
-
     const redisKey = `search_anime_${animeId}`;
-
-    // adding a delay
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
     try {
         const cachedData = await redisClient.get(redisKey);
@@ -406,64 +492,111 @@ router.get("/search/anime/:id", async (request, response) => {
             return response.send(JSON.parse(cachedData));
         }
 
-        const fetchAnime = async () => {
-            await delay(0); // No delay 
-            return axios.get(`${URLs.jikan}/anime/${animeId}`);
-        };
+        // Set up all API calls to run in parallel
+        const fetchAnime = () => axios.get(`${URLs.jikan}/anime/${animeId}`);
+        const fetchImages = () => delay(500).then(() => axios.get(`${URLs.jikan}/anime/${animeId}/pictures`));
+        const fetchVideos = () => delay(1000).then(() => axios.get(`${URLs.jikan}/anime/${animeId}/videos`));
+        const fetchStaff = () => delay(1500).then(() => axios.get(`${URLs.jikan}/anime/${animeId}/staff`));
 
-        const fetchImages = async () => {
-            await delay(1000); // 1 second delay 
-            return axios.get(`${URLs.jikan}/anime/${animeId}/pictures`);
-        };
-
-        const fetchVideos = async () => {
-            await delay(2000); // 2 seconds delay 
-            return axios.get(`${URLs.jikan}/anime/${animeId}/videos`);
-        };
-
-        const [animeResult, imagesResult, videosResult] = await Promise.allSettled([
+        const [
+            animeResult,
+            imagesResult,
+            videosResult,
+            staffResult
+        ] = await Promise.allSettled([
             fetchAnime(),
             fetchImages(),
-            fetchVideos()
+            fetchVideos(),
+            fetchStaff()
         ]);
 
-        // Handling anime data
-        let searchAnimeData = animeResult.status === 'fulfilled' ? animeResult.value.data : { isFetched: false, error: "Can't fetch anime data" };
+        // If the main anime fetch fails, we cannot proceed.
+        if (animeResult.status !== 'fulfilled') {
+            return handleError({ response: animeResult.reason.response || null, request: animeResult.reason.request || null, message: `Primary fetch failed for anime ID ${animeId}` }, response);
+        }
 
-        // Handling images data
-        let imagesData = imagesResult.status === 'fulfilled'
-            ? imagesResult.value.data.data
-            : { isFetched: false, error: "Can't fetch images" };
+        const anime = animeResult.value.data.data;
+        let directors = [];
+        let producers = [];
+        let palette = null;
 
-        // Organize images only if fetched successfully
+        if (staffResult.status === 'fulfilled' && staffResult.value.data.data) {
+            const staffArray = staffResult.value.data.data;
+            directors = staffArray
+                .filter(member => member.positions.includes('Director'))
+                .map(member => member.person.name);
+            producers = staffArray
+                .filter(member => member.positions.includes('Producer'))
+                .map(member => member.person.name);
+        }
+
+        const imageUrl = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url;
+        if (imageUrl) {
+            try {
+                palette = await getPaletteFromUrl(imageUrl);
+            } catch (err) {
+                logger.error(`Could not generate palette for anime ID ${animeId}: ${err.message}`);
+            }
+        }
+
         const organizedImages = imagesResult.status === 'fulfilled'
             ? {
                 isFetched: true,
-                jpgs: imagesData.map(image => ({
-                    image_url: image.jpg.image_url,
-                    small_image_url: image.jpg.small_image_url,
-                    large_image_url: image.jpg.large_image_url
-                })),
-                webp: imagesData.map(image => ({
-                    image_url: image.webp.image_url,
-                    small_image_url: image.webp.small_image_url,
-                    large_image_url: image.webp.large_image_url
-                }))
+                jpgs: imagesResult.value.data.data.map(img => img.jpg.large_image_url),
+                webps: imagesResult.value.data.data.map(img => img.webp.large_image_url),
             }
-            : imagesData;
+            : { isFetched: false, error: "Can't fetch images" };
 
-        // Handling videos data
-        let videosData = videosResult.status === 'fulfilled'
+        const organizedVideos = videosResult.status === 'fulfilled'
             ? { isFetched: true, data: videosResult.value.data.data }
             : { isFetched: false, error: "Can't fetch videos" };
 
-        searchAnimeData.images_data = organizedImages;
-        searchAnimeData.videos = videosData;
+        const responseData = {
+            mal_id: anime.mal_id,
+            mal_url: anime.url,
+            images: {
+                default: anime.images?.jpg?.image_url || null,
+                large: anime.images?.jpg?.large_image_url || null,
+                trailer_thumbnail: anime.trailer.images?.maximum_image_url || null
+            },
+            trailer: {
+                yt_id: anime.trailer.youtube_id,
+                yt_url: anime.trailer.url,
+                embed_url: anime.trailer.embed_url
+            },
+            titles: {
+                default_title: anime.title,
+                japanese_title: anime.title_japanese,
+                english_title: anime.title_english
+            },
+            episodes: anime.episodes,
+            rating: anime.rating,
+            type: anime.type,
+            source: anime.source,
+            status: anime.status,
+            score: anime.score,
+            rank: anime.rank,
+            popularity: anime.popularity,
+            synopsis: anime.synopsis,
+            background: anime.background,
+            season: anime.season,
+            year: anime.year,
+            genres: anime.genres.map(g => g.name),
+            themes: anime.themes.map(t => t.name),
+            demographics: anime.demographics.map(d => d.name),
+            explicit_genres: anime.explicit_genres.map(g => g.name),
+            studios: anime.studios.map(s => s.name),
+            directors,
+            producers,
+            palette,
+            additional_images: organizedImages,
+            videos: organizedVideos
+        };
 
-        await redisClient.set(redisKey, JSON.stringify(searchAnimeData), 'EX', 3600);
+        await redisClient.set(redisKey, JSON.stringify(responseData), 'EX', 3600);
 
-        logger.info(`Successfully fetched anime for ID "${animeId}" at ${new Date().toISOString()}`);
-        response.send(searchAnimeData);
+        logger.info(`Successfully fetched and processed anime for ID "${animeId}" at ${new Date().toISOString()}`);
+        response.send(responseData);
     } catch (err) {
         handleError(err, response);
     }
