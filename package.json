@@ -20,6 +20,7 @@
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.1",
     "ioredis": "^5.4.1",
+    "node-vibrant": "^4.0.3",
     "winston": "^3.15.0"
   }
 }
